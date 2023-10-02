@@ -1,6 +1,7 @@
 package inmemory
 
 import (
+	"context"
 	"github.com/grulex/go-wishlist/pkg/product"
 	"sync"
 )
@@ -17,14 +18,14 @@ func New() *Storage {
 	}
 }
 
-func (s *Storage) Upsert(p product.Product) error {
+func (s *Storage) Upsert(_ context.Context, p product.Product) error {
 	s.Lock.Lock()
 	s.products[p.ID] = p
 	s.Lock.Unlock()
 	return nil
 }
 
-func (s *Storage) Get(id product.ID) (product.Product, error) {
+func (s *Storage) Get(_ context.Context, id product.ID) (product.Product, error) {
 	s.Lock.RLock()
 	p, ok := s.products[id]
 	if !ok {
@@ -34,7 +35,7 @@ func (s *Storage) Get(id product.ID) (product.Product, error) {
 	return p, nil
 }
 
-func (s *Storage) GetMany(ids []product.ID) (products []product.Product, err error) {
+func (s *Storage) GetMany(_ context.Context, ids []product.ID) (products []product.Product, err error) {
 	s.Lock.RLock()
 	for _, id := range ids {
 		p, ok := s.products[id]

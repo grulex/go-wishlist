@@ -5,6 +5,7 @@ import (
 	"github.com/bojanz/currency"
 	"github.com/grulex/go-wishlist/pkg/image"
 	"gopkg.in/guregu/null.v4"
+	"time"
 )
 
 var ErrNotFound = errors.New("product not found")
@@ -19,4 +20,6 @@ type Product struct {
 	PriceTo     *currency.Amount
 	Description null.String
 	Url         null.String
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/grulex/go-wishlist/pkg/user"
 	"gopkg.in/guregu/null.v4"
+	"time"
 )
 
 var ErrNotFound = errors.New("auth not found")
@@ -17,7 +18,9 @@ const (
 type SocialID null.String
 
 type Auth struct {
-	UserID   user.ID
-	Method   Method
-	SocialID SocialID
+	UserID    user.ID
+	Method    Method
+	SocialID  SocialID
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

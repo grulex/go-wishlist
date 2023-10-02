@@ -1,17 +1,19 @@
 package image
 
+import (
+	"github.com/grulex/go-wishlist/pkg/file"
+	"time"
+)
+
 type ID string
 
 type Image struct {
-	ID    ID
-	Hash  Hash
-	Sizes []Size
-}
-
-type Size struct {
-	Width  uint
-	Height uint
-	Url    string
+	ID        ID
+	FileLink  file.Link
+	Width     uint
+	Height    uint
+	Hash      Hash
+	CreatedAt time.Time
 }
 
 type Hash struct {

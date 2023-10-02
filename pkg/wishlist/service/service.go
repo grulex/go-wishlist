@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
+	"time"
 )
 
 type storage interface {
@@ -29,6 +30,8 @@ func NewWishlistService(storage storage) *Service {
 
 func (s *Service) Create(ctx context.Context, wishlist wishlistPkg.Wishlist) error {
 	wishlist.ID = wishlistPkg.ID(uuid.NewString())
+	wishlist.CreatedAt = time.Now().UTC()
+	wishlist.UpdatedAt = wishlist.CreatedAt
 	return s.storage.Upsert(ctx, wishlist)
 }
 
@@ -41,6 +44,7 @@ func (s *Service) GetByUserID(ctx context.Context, userID user.ID) ([]wishlistPk
 }
 
 func (s *Service) Update(ctx context.Context, wishlist wishlistPkg.Wishlist) error {
+	wishlist.UpdatedAt = time.Now().UTC()
 	return s.storage.Upsert(ctx, wishlist)
 }
 
@@ -50,6 +54,8 @@ func (s *Service) Archive(ctx context.Context, id wishlistPkg.ID) error {
 		return err
 	}
 	wishlist.IsArchived = true
+	wishlist.UpdatedAt = time.Now().UTC()
+
 	return s.storage.Upsert(ctx, wishlist)
 }
 
@@ -59,6 +65,8 @@ func (s *Service) Restore(ctx context.Context, id wishlistPkg.ID) error {
 		return err
 	}
 	wishlist.IsArchived = false
+	wishlist.UpdatedAt = time.Now().UTC()
+
 	return s.storage.Upsert(ctx, wishlist)
 }
 
@@ -67,6 +75,8 @@ func (s *Service) GetWishlistItems(ctx context.Context, wishlistID wishlistPkg.I
 }
 
 func (s *Service) AddWishlistItem(ctx context.Context, item wishlistPkg.Item) error {
+	item.CreatedAt = time.Now().UTC()
+	item.UpdatedAt = item.CreatedAt
 	return s.storage.UpsertWishlistItem(ctx, item)
 }
 
@@ -89,6 +99,8 @@ func (s *Service) BookItem(ctx context.Context, itemID wishlistPkg.ItemID, userI
 		return wishlistPkg.ErrItemAlreadyBooked
 	}
 	item.IsBookedBy = &userID
+	item.UpdatedAt = time.Now().UTC()
+
 	return s.storage.UpsertWishlistItem(ctx, item)
 }
 
@@ -101,5 +113,7 @@ func (s *Service) UnBookItem(ctx context.Context, itemID wishlistPkg.ItemID) err
 		return nil
 	}
 	item.IsBookedBy = nil
+	item.UpdatedAt = time.Now().UTC()
+
 	return s.storage.UpsertWishlistItem(ctx, item)
 }

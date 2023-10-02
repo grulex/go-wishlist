@@ -1,20 +1,30 @@
 package wishlist
 
-import "github.com/grulex/go-wishlist/pkg/user"
-
-type Type string
-type ID string
-
-const (
-	TypePersonal Type = "personal"
-	TypePublic   Type = "public"
+import (
+	"github.com/grulex/go-wishlist/pkg/image"
+	"github.com/grulex/go-wishlist/pkg/product"
+	"github.com/grulex/go-wishlist/pkg/user"
 )
 
-type Profile struct {
+type ID string
+
+type Wishlist struct {
 	ID          ID
 	UserID      user.ID
-	Type        Type
+	IsDefault   bool
 	Title       string
-	AvatarURL   string
+	Avatar      image.Image
 	Description string
+	IsArchived  bool
+}
+
+type Item struct {
+	ID                 ItemID
+	IsBookingAvailable bool
+	IsBookedBy         *user.ID
+}
+
+type ItemID struct {
+	WishlistID ID
+	ProductID  product.ID
 }

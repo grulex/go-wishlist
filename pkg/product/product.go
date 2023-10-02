@@ -1,10 +1,13 @@
 package product
 
 import (
+	"errors"
 	"github.com/bojanz/currency"
 	"github.com/grulex/go-wishlist/pkg/image"
 	"gopkg.in/guregu/null.v4"
 )
+
+var ErrNotFound = errors.New("product not found")
 
 type ID string
 

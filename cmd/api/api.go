@@ -1,5 +1,14 @@
 package main
 
+import (
+	"context"
+	"github.com/grulex/go-wishlist/http"
+	"log"
+	"os"
+	"os/signal"
+	"time"
+)
+
 func main() {
 	// usecases:
 	// — create a new user
@@ -11,4 +20,25 @@ func main() {
 	// — archive an item from a wishlist
 	// — mark an item as booked
 	// — mark an item as unbooked
+
+	server := http.NewServer(":8080")
+	go func() {
+		if err := server.Run(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	<-c
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	err := server.Shutdown(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("shutting down")
+	os.Exit(0)
 }

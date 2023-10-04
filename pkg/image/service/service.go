@@ -8,26 +8,26 @@ import (
 )
 
 type storage interface {
-	Create(ctx context.Context, image imagePkg.Image) error
-	Get(ctx context.Context, id imagePkg.ID) (imagePkg.Image, error)
+	Upsert(ctx context.Context, image *imagePkg.Image) error
+	Get(ctx context.Context, id imagePkg.ID) (*imagePkg.Image, error)
 }
 
 type Service struct {
 	storage storage
 }
 
-func New(storage storage) *Service {
+func NewImageService(storage storage) *Service {
 	return &Service{
 		storage: storage,
 	}
 }
 
-func (s *Service) Create(ctx context.Context, image imagePkg.Image) error {
+func (s *Service) Create(ctx context.Context, image *imagePkg.Image) error {
 	image.ID = imagePkg.ID(uuid.NewString())
 	image.CreatedAt = time.Now().UTC()
-	return s.storage.Create(ctx, image)
+	return s.storage.Upsert(ctx, image)
 }
 
-func (s *Service) Get(ctx context.Context, id imagePkg.ID) (imagePkg.Image, error) {
+func (s *Service) Get(ctx context.Context, id imagePkg.ID) (*imagePkg.Image, error) {
 	return s.storage.Get(ctx, id)
 }

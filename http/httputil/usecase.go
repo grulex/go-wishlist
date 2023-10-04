@@ -7,6 +7,7 @@ type responseType string
 
 const (
 	ResponseTypeJson responseType = "json"
+	ResponseTypeHtml responseType = "html"
 )
 
 type HandleResult struct {
@@ -15,6 +16,6 @@ type HandleResult struct {
 	Error   *HandleError
 }
 
-func (h *HandleResult) HasError() bool {
+func (h HandleResult) HasError() bool {
 	return h.Error != nil
 }

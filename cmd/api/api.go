@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	configPkg "github.com/grulex/go-wishlist/config"
+	"github.com/grulex/go-wishlist/container"
 	"github.com/grulex/go-wishlist/http"
 	"log"
 	"os"
@@ -21,7 +23,8 @@ func main() {
 	// — mark an item as booked
 	// — mark an item as unbooked
 
-	server := http.NewServer(":8080")
+	config := configPkg.InitFromEnv()
+	server := http.NewServer(":8080", container.NewInMemoryServiceContainer(), config)
 	go func() {
 		if err := server.Run(); err != nil {
 			log.Println(err)

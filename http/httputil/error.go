@@ -11,6 +11,7 @@ type HandleError struct {
 	Type     errorType `json:"type"`
 	ErrorKey string    `json:"error_key"`
 	Message  string    `json:"message"`
+	Err      error     `json:"-"`
 }
 
 func (h *HandleError) JsonEncode() []byte {

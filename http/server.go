@@ -3,6 +3,8 @@ package http
 import (
 	"context"
 	"github.com/gorilla/mux"
+	"github.com/grulex/go-wishlist/config"
+	"github.com/grulex/go-wishlist/container"
 	httpUtil "github.com/grulex/go-wishlist/http/httputil"
 	"github.com/grulex/go-wishlist/http/middleware"
 	"github.com/grulex/go-wishlist/http/usecase"
@@ -15,11 +17,12 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer(listenAddr string) *Server {
+func NewServer(listenAddr string, container *container.ServiceContainer, config *config.Config) *Server {
 	r := mux.NewRouter()
 	r.HandleFunc("/health", httpUtil.ResponseWrapper(usecase.MakeUseCaseHealthCheck())).Methods("GET")
+	//r.HandleFunc("/index", httpUtil.ResponseWrapper(usecase.MakeUseCaseIndex())).Methods("GET")
 
-	authMiddleware := middleware.NewAuthMiddleware(nil, nil)
+	authMiddleware := middleware.NewTelegramAuthMiddleware(container.Auth, container.User, container.Wishlist, config.TelegramBotToken)
 	r.Use(authMiddleware)
 
 	c := cors.New(cors.Options{

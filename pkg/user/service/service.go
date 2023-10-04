@@ -8,26 +8,26 @@ import (
 )
 
 type storage interface {
-	Upsert(ctx context.Context, user userPkg.User) error
-	Get(ctx context.Context, id userPkg.ID) (userPkg.User, error)
+	Upsert(ctx context.Context, user *userPkg.User) error
+	Get(ctx context.Context, id userPkg.ID) (*userPkg.User, error)
 }
 
 type Service struct {
 	storage storage
 }
 
-func New(storage storage) *Service {
+func NewUserService(storage storage) *Service {
 	return &Service{
 		storage: storage,
 	}
 }
 
-func (s *Service) Create(ctx context.Context, user userPkg.User) error {
+func (s *Service) Create(ctx context.Context, user *userPkg.User) error {
 	user.ID = userPkg.ID(uuid.NewString())
 	user.CreatedAt = time.Now().UTC()
 	return s.storage.Upsert(ctx, user)
 }
 
-func (s *Service) Get(ctx context.Context, id userPkg.ID) (userPkg.User, error) {
+func (s *Service) Get(ctx context.Context, id userPkg.ID) (*userPkg.User, error) {
 	return s.storage.Get(ctx, id)
 }

@@ -2,6 +2,7 @@ package httputil
 
 import (
 	"encoding/json"
+	"html/template"
 	"log"
 	"net/http"
 )
@@ -22,7 +23,7 @@ func ResponseWrapper(f HttpUseCase) http.HandlerFunc {
 
 func responseError(handleError *HandleError, w http.ResponseWriter) {
 	if handleError.Type == ErrorInternal {
-		log.Println("Handler Error: ", string(handleError.JsonEncode()))
+		log.Println("Handler Error: ", string(handleError.JsonEncode()), "err", handleError.Err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -32,14 +33,14 @@ func responseError(handleError *HandleError, w http.ResponseWriter) {
 	}{handleError}
 	responseJson, err := json.Marshal(errorResp)
 	if err != nil {
-		log.Println("can't encode json", err)
+		log.Println("can't encode json", err, "error", handleError.Err.Error())
 		http.Error(w, "can't encode json response error", handleError.GetHttpStatus())
 		return
 	}
 	w.WriteHeader(handleError.GetHttpStatus())
 	w.Header().Set("Content-Type", "application/json")
 	if n, err := w.Write(responseJson); err != nil {
-		log.Println("error writing response", err, "bytesWritten", n)
+		log.Println("error writing response", err, "bytesWritten", n, "error", handleError.Err.Error())
 	}
 }
 
@@ -55,6 +56,15 @@ func responseOk(result HandleResult, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusOK)
 		if n, err := w.Write(responseJson); err != nil {
 			log.Println("error writing response", "err", err, "bytesWritten", n)
+		}
+		return
+	}
+
+	if result.Type == ResponseTypeHtml {
+		tmpl := result.Payload.(*template.Template)
+		if err := tmpl.Execute(w, nil); err != nil {
+			log.Println("error executing template", err)
+			http.Error(w, "error executing template", http.StatusInternalServerError)
 		}
 		return
 	}

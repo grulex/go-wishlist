@@ -15,7 +15,7 @@ type storage interface {
 	GetWishlistItems(ctx context.Context, wishlistID wishlistPkg.ID, limit, offset uint) (items []*wishlistPkg.Item, haveMore bool, err error)
 	GetWishlistItemByID(ctx context.Context, itemID wishlistPkg.ItemID) (*wishlistPkg.Item, error)
 	UpsertWishlistItem(ctx context.Context, item *wishlistPkg.Item) error
-	DeleteWishlistItem(ctx context.Context, item *wishlistPkg.Item) error
+	DeleteWishlistItem(ctx context.Context, item wishlistPkg.ItemID) error
 }
 
 type Service struct {
@@ -70,6 +70,10 @@ func (s *Service) Restore(ctx context.Context, id wishlistPkg.ID) error {
 	return s.storage.Upsert(ctx, wishlist)
 }
 
+func (s *Service) GetWishlistItem(ctx context.Context, itemID wishlistPkg.ItemID) (*wishlistPkg.Item, error) {
+	return s.storage.GetWishlistItemByID(ctx, itemID)
+}
+
 func (s *Service) GetWishlistItems(ctx context.Context, wishlistID wishlistPkg.ID, limit, offset uint) ([]*wishlistPkg.Item, bool, error) {
 	return s.storage.GetWishlistItems(ctx, wishlistID, limit, offset)
 }
@@ -80,7 +84,7 @@ func (s *Service) AddWishlistItem(ctx context.Context, item *wishlistPkg.Item) e
 	return s.storage.UpsertWishlistItem(ctx, item)
 }
 
-func (s *Service) RemoveItem(ctx context.Context, item *wishlistPkg.Item) error {
+func (s *Service) RemoveItem(ctx context.Context, item wishlistPkg.ItemID) error {
 	return s.storage.DeleteWishlistItem(ctx, item)
 }
 

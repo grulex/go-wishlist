@@ -141,7 +141,7 @@ func registerTelegramUser(
 	tgUser telegramUser,
 ) (*authPkg.Auth, error) {
 	user := &userPkg.User{
-		FullName: tgUser.FirstName + tgUser.LastName,
+		FullName: tgUser.FirstName + " " + tgUser.LastName,
 	}
 
 	err := userService.Create(ctx, user)
@@ -152,7 +152,7 @@ func registerTelegramUser(
 	newWishlist := &wishlistPkg.Wishlist{
 		UserID:      user.ID,
 		IsDefault:   true,
-		Title:       user.FullName + "'s wishlist",
+		Title:       user.FullName + "'s Wishlist",
 		Description: "",
 		IsArchived:  false,
 	}

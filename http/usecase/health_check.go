@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func MakeUseCaseHealthCheck() httputil.HttpUseCase {
+func MakeHealthCheckUsecase() httputil.HttpUseCase {
 	return func(r *http.Request) httputil.HandleResult {
 		payload := struct {
 			Alive bool `json:"alive"`

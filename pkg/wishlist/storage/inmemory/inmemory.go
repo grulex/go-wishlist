@@ -76,15 +76,15 @@ func (s *Storage) UpsertWishlistItem(_ context.Context, item *wishlist.Item) err
 	return nil
 }
 
-func (s *Storage) DeleteWishlistItem(_ context.Context, item *wishlist.Item) error {
+func (s *Storage) DeleteWishlistItem(_ context.Context, itemID wishlist.ItemID) error {
 	s.ItemsLock.Lock()
 	var newItems []*wishlist.Item
-	for _, i := range s.Items[item.ID.WishlistID] {
-		if i.ID.ProductID != item.ID.ProductID {
+	for _, i := range s.Items[itemID.WishlistID] {
+		if i.ID.ProductID != itemID.ProductID {
 			newItems = append(newItems, i)
 		}
 	}
-	s.Items[item.ID.WishlistID] = newItems
+	s.Items[itemID.WishlistID] = newItems
 	s.ItemsLock.Unlock()
 	return nil
 }

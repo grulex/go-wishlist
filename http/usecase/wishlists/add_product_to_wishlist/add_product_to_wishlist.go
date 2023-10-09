@@ -24,7 +24,7 @@ type productService interface {
 
 type requestJson struct {
 	Product            types.Product `json:"product"`
-	IsBookingAvailable bool          `json:"is_booking_available"`
+	IsBookingAvailable bool          `json:"is_booking_available,omitempty"`
 }
 
 func MakeAddProductToWishlistUsecase(wService wishlistService, pService productService) httputil.HttpUseCase {

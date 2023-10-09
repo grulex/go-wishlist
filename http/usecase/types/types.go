@@ -31,7 +31,7 @@ type Item struct {
 
 type Product struct {
 	ID          *productPkg.ID   `json:"id,omitempty"`
-	Title       string           `json:"title"`
+	Title       string           `json:"title,omitempty"`
 	PriceFrom   *currency.Amount `json:"price_from,omitempty"`
 	PriceTo     *currency.Amount `json:"price_to,omitempty"`
 	Description null.String      `json:"description,omitempty"`

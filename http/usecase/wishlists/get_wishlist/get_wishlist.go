@@ -82,11 +82,12 @@ func MakeGetWishlistUsecase(sService subscribeService, wService wishlistService)
 			IsSubscribed bool           `json:"is_subscribed"`
 		}{
 			Wishlist: types.Wishlist{
-				ID:          wishlist.ID,
-				Title:       wishlist.Title,
-				Description: wishlist.Description,
-				IsDefault:   wishlist.IsDefault,
-				Avatar:      nil, // todo
+				ID:           wishlist.ID,
+				Title:        wishlist.Title,
+				Description:  wishlist.Description,
+				IsDefault:    wishlist.IsDefault,
+				Avatar:       nil, // todo
+				IsMyWishlist: *currentUserID == wishlist.UserID,
 			},
 			IsSubscribed: subscribe != nil,
 		}

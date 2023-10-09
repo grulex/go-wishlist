@@ -28,10 +28,6 @@ func (s *Storage) Upsert(_ context.Context, w *wishlist.Wishlist) error {
 	s.Wishlists[w.ID] = w
 	s.WishlistLock.Unlock()
 
-	s.ItemsLock.Lock()
-	s.Items[w.ID] = []*wishlist.Item{}
-	s.ItemsLock.Unlock()
-
 	return nil
 }
 
@@ -57,6 +53,7 @@ func (s *Storage) GetByUserID(_ context.Context, userID user.ID) ([]*wishlist.Wi
 
 func (s *Storage) GetWishlistItems(_ context.Context, wishlistID wishlist.ID, limit, offset uint) (items []*wishlist.Item, haveMore bool, err error) {
 	s.ItemsLock.RLock()
+	defer s.ItemsLock.RUnlock()
 
 	items = s.Items[wishlistID]
 	if offset > uint(len(items)) {
@@ -65,12 +62,14 @@ func (s *Storage) GetWishlistItems(_ context.Context, wishlistID wishlist.ID, li
 	if offset+limit > uint(len(items)) {
 		return items[offset:], false, nil
 	}
-	s.ItemsLock.RUnlock()
 	return items[offset : offset+limit], true, nil
 }
 
 func (s *Storage) UpsertWishlistItem(_ context.Context, item *wishlist.Item) error {
 	s.ItemsLock.Lock()
+	if _, ok := s.Items[item.ID.WishlistID]; !ok {
+		s.Items[item.ID.WishlistID] = []*wishlist.Item{}
+	}
 	s.Items[item.ID.WishlistID] = append(s.Items[item.ID.WishlistID], item)
 	s.ItemsLock.Unlock()
 	return nil
@@ -78,6 +77,9 @@ func (s *Storage) UpsertWishlistItem(_ context.Context, item *wishlist.Item) err
 
 func (s *Storage) DeleteWishlistItem(_ context.Context, itemID wishlist.ItemID) error {
 	s.ItemsLock.Lock()
+	if _, ok := s.Items[itemID.WishlistID]; !ok {
+		s.Items[itemID.WishlistID] = []*wishlist.Item{}
+	}
 	var newItems []*wishlist.Item
 	for _, i := range s.Items[itemID.WishlistID] {
 		if i.ID.ProductID != itemID.ProductID {
@@ -91,12 +93,11 @@ func (s *Storage) DeleteWishlistItem(_ context.Context, itemID wishlist.ItemID) 
 
 func (s *Storage) GetWishlistItemByID(_ context.Context, itemID wishlist.ItemID) (*wishlist.Item, error) {
 	s.ItemsLock.RLock()
+	defer s.ItemsLock.RUnlock()
 	for _, i := range s.Items[itemID.WishlistID] {
 		if i.ID.ProductID == itemID.ProductID {
-			s.ItemsLock.RUnlock()
 			return i, nil
 		}
 	}
-	s.ItemsLock.RUnlock()
 	return nil, wishlist.ErrItemNotFound
 }

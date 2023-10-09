@@ -29,7 +29,9 @@ func NewWishlistService(storage storage) *Service {
 }
 
 func (s *Service) Create(ctx context.Context, wishlist *wishlistPkg.Wishlist) error {
-	wishlist.ID = wishlistPkg.ID(uuid.NewString())
+	if wishlist.ID == "" {
+		wishlist.ID = wishlistPkg.ID(uuid.NewString())
+	}
 	wishlist.CreatedAt = time.Now().UTC()
 	wishlist.UpdatedAt = wishlist.CreatedAt
 	return s.storage.Upsert(ctx, wishlist)
@@ -96,7 +98,7 @@ func (s *Service) BookItem(ctx context.Context, itemID wishlistPkg.ItemID, userI
 	if !item.IsBookingAvailable {
 		return wishlistPkg.ErrBookingNotAvailable
 	}
-	if item.IsBookedBy == &userID {
+	if item.IsBookedBy != nil && *item.IsBookedBy == userID {
 		return nil
 	}
 	if item.IsBookedBy != nil {

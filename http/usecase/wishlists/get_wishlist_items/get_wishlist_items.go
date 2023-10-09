@@ -88,15 +88,17 @@ func MakeGetWishlistItemsUsecase(wService wishlistService, productService produc
 
 		var resultItems []types.Item
 		for _, item := range items {
+			isBookedByCurrentUser := currentUserID != nil &&
+				item.IsBookedBy != nil &&
+				*item.IsBookedBy == *currentUserID
 			resultItems = append(resultItems, types.Item{
 				ID:                    item.ID,
 				IsBookingAvailable:    item.IsBookingAvailable,
-				IsBookedByCurrentUser: currentUserID != nil && item.IsBookedBy == currentUserID,
+				IsBookedByCurrentUser: isBookedByCurrentUser,
 				Product: types.Product{
 					ID:          &item.ID.ProductID,
 					Title:       productsMap[item.ID.ProductID].Title,
-					PriceFrom:   productsMap[item.ID.ProductID].PriceFrom,
-					PriceTo:     productsMap[item.ID.ProductID].PriceTo,
+					PriceFrom:   productsMap[item.ID.ProductID].Price,
 					Description: productsMap[item.ID.ProductID].Description,
 					Url:         productsMap[item.ID.ProductID].Url,
 					Image:       nil, // todo

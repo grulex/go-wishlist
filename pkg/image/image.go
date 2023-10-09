@@ -1,9 +1,12 @@
 package image
 
 import (
+	"errors"
 	"github.com/grulex/go-wishlist/pkg/file"
 	"time"
 )
+
+var ErrNotFound = errors.New("image not found")
 
 type ID string
 

@@ -68,9 +68,9 @@ func NewServer(listenAddr string, container *container.ServiceContainer, config 
 		book_wishlist_item.MakeBookWishlistItemUsecase(container.Wishlist),
 	)).Methods("PUT")
 
-	apiRouter.HandleFunc("/wishlists/{id}/items/{productId}/unbook", httpUtil.ResponseWrapper(
+	apiRouter.HandleFunc("/wishlists/{id}/items/{productId}/book", httpUtil.ResponseWrapper(
 		unbook_wishlist_item.MakeUnBookWishlistItemUsecase(container.Wishlist),
-	)).Methods("PUT")
+	)).Methods("DELETE")
 
 	apiRouter.HandleFunc("/wishlists/{id}/items/{productId}", httpUtil.ResponseWrapper(
 		remove_product_from_wishlist.MakeRemoveProductFromWishlistUsecase(container.Wishlist),

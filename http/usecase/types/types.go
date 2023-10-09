@@ -14,11 +14,12 @@ type User struct {
 }
 
 type Wishlist struct {
-	ID          wishlist.ID `json:"id"`
-	IsDefault   bool        `json:"is_default"`
-	Title       string      `json:"title"`
-	Avatar      *Image      `json:"avatar,omitempty"`
-	Description string      `json:"description"`
+	ID           wishlist.ID `json:"id"`
+	IsDefault    bool        `json:"is_default"`
+	Title        string      `json:"title"`
+	Avatar       *Image      `json:"avatar,omitempty"`
+	Description  string      `json:"description"`
+	IsMyWishlist bool        `json:"is_my_wishlist"`
 }
 
 type Item struct {

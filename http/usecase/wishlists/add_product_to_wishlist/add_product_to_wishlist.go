@@ -69,14 +69,13 @@ func MakeAddProductToWishlistUsecase(wService wishlistService, pService productS
 			}
 		}
 
-		if request.Product.ID != nil {
+		if request.Product.ID != nil && *request.Product.ID != "" {
 			return addItemToWishlist(r.Context(), wishlistID, *request.Product.ID, request.IsBookingAvailable, wService)
 		}
 
 		product := &productPkg.Product{
 			Title:       request.Product.Title,
-			PriceFrom:   request.Product.PriceFrom,
-			PriceTo:     request.Product.PriceTo,
+			Price:       request.Product.PriceFrom,
 			Description: request.Product.Description,
 			Url:         request.Product.Url,
 			ImageID:     nil, // todo

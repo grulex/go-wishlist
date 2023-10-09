@@ -47,7 +47,17 @@ func MakeUpdateWishlistUsecase(wService wishlistService) httputil.HttpUseCase {
 			}
 		}
 
-		handleResult, valid := isValidWishlistAccess(r, wService, wishlistID, auth.UserID)
+		wishlist, err := wService.Get(r.Context(), wishlistPkg.ID(wishlistID))
+		if err != nil && !errors.Is(err, wishlistPkg.ErrNotFound) {
+			return httputil.HandleResult{
+				Error: &httputil.HandleError{
+					Type:    httputil.ErrorInternal,
+					Message: "Error getting wishlist",
+				},
+			}
+		}
+
+		handleResult, valid := isValidWishlistAccess(r, wishlist, wishlistID, auth.UserID)
 		if !valid {
 			return handleResult
 		}
@@ -63,14 +73,10 @@ func MakeUpdateWishlistUsecase(wService wishlistService) httputil.HttpUseCase {
 			}
 		}
 
-		wishlist := wishlistPkg.Wishlist{
-			ID:          request.Wishlist.ID,
-			IsDefault:   request.Wishlist.IsDefault,
-			Title:       request.Wishlist.Title,
-			Avatar:      nil, // todo
-			Description: request.Wishlist.Description,
-		}
-		err := wService.Update(r.Context(), &wishlist)
+		wishlist.Title = request.Wishlist.Title
+		wishlist.Description = request.Wishlist.Description
+		wishlist.IsDefault = request.Wishlist.IsDefault
+		err = wService.Update(r.Context(), wishlist)
 		if err != nil {
 			return httputil.HandleResult{
 				Error: &httputil.HandleError{
@@ -85,16 +91,7 @@ func MakeUpdateWishlistUsecase(wService wishlistService) httputil.HttpUseCase {
 	}
 }
 
-func isValidWishlistAccess(r *http.Request, wService wishlistService, wishlistID string, currentUserID userPkg.ID) (httputil.HandleResult, bool) {
-	wishlist, err := wService.Get(r.Context(), wishlistPkg.ID(wishlistID))
-	if err != nil && !errors.Is(err, wishlistPkg.ErrNotFound) {
-		return httputil.HandleResult{
-			Error: &httputil.HandleError{
-				Type:    httputil.ErrorInternal,
-				Message: "Error getting wishlist",
-			},
-		}, false
-	}
+func isValidWishlistAccess(r *http.Request, wishlist *wishlistPkg.Wishlist, wishlistID string, currentUserID userPkg.ID) (httputil.HandleResult, bool) {
 	if wishlist == nil {
 		return httputil.HandleResult{
 			Error: &httputil.HandleError{

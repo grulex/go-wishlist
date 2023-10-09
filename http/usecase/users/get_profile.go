@@ -75,18 +75,19 @@ func MakeGetProfileUsecase(subscribesService subscribeService, wService wishlist
 
 		payload := struct {
 			User            types.User        `json:"user"`
-			DefaultWishlist types.Wishlist    `json:"defaultWishlist"`
+			DefaultWishlist types.Wishlist    `json:"default_wishlist"`
 			Subscribes      []types.Subscribe `json:"subscribes"`
 		}{
 			User: types.User{
 				ID: auth.UserID,
 			},
 			DefaultWishlist: types.Wishlist{
-				ID:          defaultWishlist.ID,
-				IsDefault:   defaultWishlist.IsDefault,
-				Title:       defaultWishlist.Title,
-				Avatar:      avatarAnswer,
-				Description: defaultWishlist.Description,
+				ID:           defaultWishlist.ID,
+				IsDefault:    defaultWishlist.IsDefault,
+				Title:        defaultWishlist.Title,
+				Avatar:       avatarAnswer,
+				Description:  defaultWishlist.Description,
+				IsMyWishlist: true,
 			},
 			Subscribes: subscribeAnswer,
 		}

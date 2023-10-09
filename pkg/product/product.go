@@ -16,8 +16,7 @@ type Product struct {
 	ID          ID
 	Title       string
 	ImageID     *image.ID
-	PriceFrom   *currency.Amount
-	PriceTo     *currency.Amount
+	Price       *currency.Amount
 	Description null.String
 	Url         null.String
 	CreatedAt   time.Time

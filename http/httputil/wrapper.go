@@ -23,7 +23,7 @@ func ResponseWrapper(f HttpUseCase) http.HandlerFunc {
 
 func responseError(handleError *HandleError, w http.ResponseWriter) {
 	if handleError.Type == ErrorInternal {
-		log.Println("Handler Error: ", string(handleError.JsonEncode()), "err", handleError.Err.Error())
+		log.Println("Handler Error: ", string(handleError.JsonEncode()), "err", handleError.Err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -69,6 +69,10 @@ func responseOk(result HandleResult, w http.ResponseWriter) {
 		return
 	}
 
-	log.Println("unknown response type", result.Type)
-	http.Error(w, "unknown response type", http.StatusInternalServerError)
+	responseJson, _ := json.Marshal(struct{}{})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if n, err := w.Write(responseJson); err != nil {
+		log.Println("error writing response", "err", err, "bytesWritten", n)
+	}
 }

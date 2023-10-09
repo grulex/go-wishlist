@@ -30,6 +30,6 @@ type Item struct {
 }
 
 type ItemID struct {
-	WishlistID ID
-	ProductID  product.ID
+	WishlistID ID         `json:"wishlist_id"`
+	ProductID  product.ID `json:"product_id"`
 }

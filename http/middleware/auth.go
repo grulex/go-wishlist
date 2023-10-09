@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/gorilla/mux"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
@@ -51,8 +51,25 @@ func NewTelegramAuthMiddleware(
 ) mux.MiddlewareFunc {
 	return func(next httpPkg.Handler) httpPkg.Handler {
 		return httpPkg.HandlerFunc(func(w httpPkg.ResponseWriter, r *httpPkg.Request) {
-			query := r.URL.Query()
-			fmt.Println(query)
+			var query url.Values
+
+			// auth header
+			authHeader := r.Header.Get("Authorization")
+			// base64 decode
+			authHeaderBytes, err := base64.StdEncoding.DecodeString(authHeader)
+			authHeader = string(authHeaderBytes)
+			if len(authHeader) == 0 || err != nil {
+				if err != nil {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+
+			query, err = url.ParseQuery(authHeader)
+			if err != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
 
 			hash := query.Get("hash")
 			if len(hash) == 0 {
@@ -149,11 +166,17 @@ func registerTelegramUser(
 		return nil, err
 	}
 
+	wishlistId := strconv.Itoa(tgUser.ID)
+	if tgUser.Username != "" {
+		wishlistId = tgUser.Username
+	}
+
 	newWishlist := &wishlistPkg.Wishlist{
+		ID:          wishlistPkg.ID(wishlistId),
 		UserID:      user.ID,
 		IsDefault:   true,
 		Title:       user.FullName + "'s Wishlist",
-		Description: "",
+		Description: "I will be happy to receive any of these gifts!",
 		IsArchived:  false,
 	}
 

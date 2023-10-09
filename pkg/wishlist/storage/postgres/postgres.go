@@ -135,7 +135,7 @@ func (s *Storage) GetByUserID(ctx context.Context, userID userPkg.ID) ([]*wishli
 
 func (s *Storage) GetWishlistItems(ctx context.Context, wishlistID wishlistPkg.ID, limit, offset uint) (items []*wishlistPkg.Item, haveMore bool, err error) {
 	itemsPersistent := make([]*itemPersistent, 0)
-	query := `SELECT * FROM wishlist_item WHERE wishlist_id = $1 LIMIT $2 OFFSET $3`
+	query := `SELECT * FROM wishlist_item WHERE wishlist_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 	err = s.db.SelectContext(ctx, &itemsPersistent, query, wishlistID, limit+1, offset)
 	if err != nil {
 		return nil, false, err

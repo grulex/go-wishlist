@@ -33,7 +33,7 @@ func MakeGetWishlistItemsUsecase(wService wishlistService, productService produc
 		if len(r.URL.Query().Get("limit")) == 0 {
 			limit, err = strconv.ParseInt(r.URL.Query().Get("limit"), 10, 64)
 			if err != nil {
-				limit = 10
+				limit = 100
 			}
 		}
 		if len(r.URL.Query().Get("offset")) == 0 {
@@ -95,6 +95,7 @@ func MakeGetWishlistItemsUsecase(wService wishlistService, productService produc
 				ID:                    item.ID,
 				IsBookingAvailable:    item.IsBookingAvailable,
 				IsBookedByCurrentUser: isBookedByCurrentUser,
+				IsBooked:              item.IsBookedBy != nil,
 				Product: types.Product{
 					ID:          &item.ID.ProductID,
 					Title:       productsMap[item.ID.ProductID].Title,

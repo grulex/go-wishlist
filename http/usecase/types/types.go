@@ -26,6 +26,7 @@ type Item struct {
 	ID                    wishlist.ItemID `json:"id"`
 	IsBookingAvailable    bool            `json:"is_booking_available"`
 	IsBookedByCurrentUser bool            `json:"is_booked_by_current_user"`
+	IsBooked              bool            `json:"is_booked"`
 	Product               Product         `json:"product"`
 }
 

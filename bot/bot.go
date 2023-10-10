@@ -21,6 +21,9 @@ type TelegramBot struct {
 func NewTelegramBot(token, miniAppUrl string, wService wishlistService) *TelegramBot {
 	telegramBot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
+		if err.Error() == "Not Found" {
+			panic("Bot not found. Token is invalid")
+		}
 		panic(err)
 	}
 	return &TelegramBot{

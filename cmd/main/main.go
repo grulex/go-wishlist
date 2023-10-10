@@ -17,6 +17,9 @@ import (
 
 func main() {
 	config := configPkg.InitFromEnv()
+	if config.TelegramBotToken == "" {
+		log.Fatal("env TELEGRAM_BOT_TOKEN is not set")
+	}
 
 	var serviceContainer *container.ServiceContainer
 	if config.IsPgEnabled {
@@ -53,11 +56,6 @@ func main() {
 	}()
 
 	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				fmt.Println("Recovered. Error:\n", r)
-			}
-		}()
 		b := bot.NewTelegramBot(config.TelegramBotToken, config.TelegramMiniAppUrl, serviceContainer.Wishlist)
 		_ = b.Start()
 	}()

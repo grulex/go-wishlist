@@ -18,7 +18,6 @@ import (
 	"github.com/grulex/go-wishlist/http/usecase/wishlists/unbook_wishlist_item"
 	"github.com/grulex/go-wishlist/http/usecase/wishlists/unsubscribe_wishlist"
 	"github.com/grulex/go-wishlist/http/usecase/wishlists/update_wishlist"
-	"github.com/rs/cors"
 	"net/http"
 	"time"
 )
@@ -30,7 +29,6 @@ type Server struct {
 func NewServer(listenAddr string, container *container.ServiceContainer, config *config.Config) *Server {
 	r := mux.NewRouter()
 	r.HandleFunc("/health", httpUtil.ResponseWrapper(usecase.MakeHealthCheckUsecase())).Methods("GET")
-	//r.HandleFunc("/index", httpUtil.ResponseWrapper(usecase.MakeIndexUsecase())).Methods("GET")
 
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	authMiddleware := middleware.NewTelegramAuthMiddleware(container.Auth, container.User, container.Wishlist, config.TelegramBotToken)
@@ -76,16 +74,16 @@ func NewServer(listenAddr string, container *container.ServiceContainer, config 
 		remove_product_from_wishlist.MakeRemoveProductFromWishlistUsecase(container.Wishlist),
 	)).Methods("DELETE")
 
-	c := cors.New(cors.Options{
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
-		AllowedHeaders:   []string{"Origin", "Content-Type"},
-		AllowCredentials: true,
-		MaxAge:           3600,
-	})
-	handler := c.Handler(r)
+	//c := cors.New(cors.Options{
+	//	AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
+	//	AllowedHeaders:   []string{"Origin", "Content-Type"},
+	//	AllowCredentials: true,
+	//	MaxAge:           3600,
+	//})
+	//handler := c.Handler(r)
 	server := &http.Server{
 		Addr:              listenAddr,
-		Handler:           handler,
+		Handler:           r,
 		ReadHeaderTimeout: time.Second * 10,
 		WriteTimeout:      time.Second * 30,
 	}

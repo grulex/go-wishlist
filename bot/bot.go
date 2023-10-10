@@ -78,7 +78,7 @@ func (s TelegramBot) Start() error {
 				button := getButton(" 🎁Create Wishlist!", s.miniAppUrl)
 				msg := tgbotapi.NewMessage(update.MyChatMember.Chat.ID,
 					"Hello, I'm Wishlist Bot!\n\nI can help you to manage your wishlist.\n\n"+
-						"Press \"Create Wishlist!\" or \"My Wishlist\" menu.\n\n"+
+						"Press \"Create Wishlist!\" button or \"My Wishlist\" menu.\n\n"+
 						"Also, you can type @"+s.telegramBot.Self.UserName+" and your username in "+
 						"any chat and I'll share your wishlist.")
 				msg.ReplyMarkup = &button

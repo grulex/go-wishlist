@@ -74,13 +74,6 @@ func NewServer(listenAddr string, container *container.ServiceContainer, config 
 		remove_product_from_wishlist.MakeRemoveProductFromWishlistUsecase(container.Wishlist),
 	)).Methods("DELETE")
 
-	//c := cors.New(cors.Options{
-	//	AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
-	//	AllowedHeaders:   []string{"Origin", "Content-Type"},
-	//	AllowCredentials: true,
-	//	MaxAge:           3600,
-	//})
-	//handler := c.Handler(r)
 	server := &http.Server{
 		Addr:              listenAddr,
 		Handler:           r,

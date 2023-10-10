@@ -11,9 +11,9 @@ docker build -t telegram-wishlist-backend .
 ```
 ```bash
 docker run --rm -p 8080:8080 \
--e TELEGRAM_BOT_TOKEN='YOUR_BOT_TOKEN' \
--e TELEGRAM_MINI_APP_URL='http://t.me/NameYourBot/miniappName' \
-telegram-wishlist-backend:latest
+    -e TELEGRAM_BOT_TOKEN='YOUR_BOT_TOKEN' \
+    -e TELEGRAM_MINI_APP_URL='http://t.me/NameYourBot/miniappName' \
+    telegram-wishlist-backend:latest
 ```
 Project will be available on http://localhost:8080
 
@@ -26,12 +26,12 @@ You need create base schema in database (run this sql queries: [/sql/init.sql](h
 When running the image, specify environment variables for Postgres:
 ```bash
 docker run --rm -p 8080:8080 \
--e TELEGRAM_BOT_TOKEN='YOUR_BOT_TOKEN' \
--e TELEGRAM_MINI_APP_URL='http://t.me/NameYourBot/miniappName' \
--e PG_HOST='YOUR_PG_HOST' \
--e PG_PORT='YOUR_PG_PORT' \
--e PG_DATABASE='YOUR_PG_DATABASE' \
--e PG_USER='YOUR_PG_USER' \
--e PG_PASSWORD='YOUR_PG_PASSWORD' \
-telegram-wishlist-backend:latest
+    -e TELEGRAM_BOT_TOKEN='YOUR_BOT_TOKEN' \
+    -e TELEGRAM_MINI_APP_URL='http://t.me/NameYourBot/miniappName' \
+    -e PG_HOST='YOUR_PG_HOST' \
+    -e PG_PORT='YOUR_PG_PORT' \
+    -e PG_DATABASE='YOUR_PG_DATABASE' \
+    -e PG_USER='YOUR_PG_USER' \
+    -e PG_PASSWORD='YOUR_PG_PASSWORD' \
+    telegram-wishlist-backend:latest
 ```

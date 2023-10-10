@@ -7,6 +7,9 @@ See more: https://github.com/grulex/telegram-wishlist-miniapp
 ## Quick start
 You can start backend quickly with docker:
 ```bash
+docker build -t telegram-wishlist-backend .
+```
+```bash
 docker run --rm -p 8080:8080 \
 -e TELEGRAM_BOT_TOKEN='YOUR_BOT_TOKEN' \
 -e TELEGRAM_MINI_APP_URL='http://t.me/NameYourBot/miniappName' \

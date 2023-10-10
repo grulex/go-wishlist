@@ -87,7 +87,7 @@ func MakeGetWishlistUsecase(sService subscribeService, wService wishlistService)
 				Description:  wishlist.Description,
 				IsDefault:    wishlist.IsDefault,
 				Avatar:       nil, // todo
-				IsMyWishlist: *currentUserID == wishlist.UserID,
+				IsMyWishlist: currentUserID != nil && *currentUserID == wishlist.UserID,
 			},
 			IsSubscribed: subscribe != nil,
 		}

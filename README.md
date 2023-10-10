@@ -21,6 +21,8 @@ All data will be stored in memory, if you stop container, all data will be lost.
 
 If you want store data permanently, you can use postgres database (for example, with [this image](https://hub.docker.com/_/postgres)).
 
+You need create base schema in database (see [/sql/init.sql](https://github.com/grulex/go-wishlist/blob/main/sql/init.sql))
+
 When running the image, specify environment variables for Postgres:
 ```bash
 docker run --rm -p 8080:8080 \

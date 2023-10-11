@@ -21,10 +21,6 @@ import (
 	"strings"
 )
 
-type wishlistService interface {
-	Get(ctx context.Context, id wishlistPkg.ID) (*wishlistPkg.Wishlist, error)
-}
-
 type TelegramBot struct {
 	telegramBot *tgbotapi.BotAPI
 	miniAppUrl  string
@@ -218,12 +214,15 @@ func (s TelegramBot) createAvatarImage(ctx context.Context, tgUserId int64) (*im
 		return nil, nil
 	}
 
-	middleSizeFile := resp.Photos[0][len(resp.Photos[0])-2:][0]
+	middleSizeFile := resp.Photos[0][0]
+	if len(resp.Photos[0]) >= 3 {
+		middleSizeFile = resp.Photos[0][len(resp.Photos[0])-2:][0]
+	}
 
 	fileResp, err := s.telegramBot.GetFile(tgbotapi.FileConfig{
 		FileID: middleSizeFile.FileID,
 	})
-	if resp.TotalCount <= 0 {
+	if err != nil {
 		return nil, err
 	}
 

@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"github.com/grulex/go-wishlist/http/httputil"
+	"github.com/grulex/go-wishlist/http/usecase"
 	"github.com/grulex/go-wishlist/http/usecase/types"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
 	imagePkg "github.com/grulex/go-wishlist/pkg/image"
@@ -83,7 +84,7 @@ func MakeGetProfileUsecase(subscribesService subscribeService, wService wishlist
 			}
 			avatarAnswer = &types.Image{
 				ID:   *defaultWishlist.Avatar,
-				Link: string(avatar.FileLink.ID),
+				Link: usecase.GetFileUrl(r, avatar.FileLink),
 			}
 		}
 

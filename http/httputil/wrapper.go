@@ -3,6 +3,7 @@ package httputil
 import (
 	"encoding/json"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 )
@@ -66,6 +67,17 @@ func responseOk(result HandleResult, w http.ResponseWriter) {
 			log.Println("error executing template", err)
 			http.Error(w, "error executing template", http.StatusInternalServerError)
 		}
+		return
+	}
+
+	if result.Type == ResponseTypeJpeg {
+		reader := result.Payload.(io.ReadCloser)
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.WriteHeader(http.StatusOK)
+		if n, err := io.Copy(w, reader); err != nil {
+			log.Println("error writing response", "err", err, "bytesWritten", n)
+		}
+		_ = reader.Close()
 		return
 	}
 

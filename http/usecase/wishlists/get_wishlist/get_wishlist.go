@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/grulex/go-wishlist/http/httputil"
+	"github.com/grulex/go-wishlist/http/usecase"
 	"github.com/grulex/go-wishlist/http/usecase/types"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
+	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	subscribePkg "github.com/grulex/go-wishlist/pkg/subscribe"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
@@ -22,7 +24,11 @@ type subscribeService interface {
 	Get(ctx context.Context, userID userPkg.ID, wishlistID wishlistPkg.ID) (*subscribePkg.Subscribe, error)
 }
 
-func MakeGetWishlistUsecase(sService subscribeService, wService wishlistService) httputil.HttpUseCase {
+type imageService interface {
+	Get(ctx context.Context, id imagePkg.ID) (*imagePkg.Image, error)
+}
+
+func MakeGetWishlistUsecase(sService subscribeService, wService wishlistService, iService imageService) httputil.HttpUseCase {
 	return func(r *http.Request) httputil.HandleResult {
 		var currentUserID *userPkg.ID
 		auth, ok := authPkg.FromContext(r.Context())
@@ -77,6 +83,23 @@ func MakeGetWishlistUsecase(sService subscribeService, wService wishlistService)
 			}
 		}
 
+		var avatarAnswer *types.Image
+		if wishlist.Avatar != nil {
+			avatar, err := iService.Get(r.Context(), *wishlist.Avatar)
+			if err != nil {
+				return httputil.HandleResult{
+					Error: &httputil.HandleError{
+						Type:    httputil.ErrorInternal,
+						Message: "Error getting avatar",
+					},
+				}
+			}
+			avatarAnswer = &types.Image{
+				ID:   *wishlist.Avatar,
+				Link: usecase.GetFileUrl(r, avatar.FileLink),
+			}
+		}
+
 		payload := struct {
 			Wishlist     types.Wishlist `json:"wishlist"`
 			IsSubscribed bool           `json:"is_subscribed"`
@@ -86,7 +109,7 @@ func MakeGetWishlistUsecase(sService subscribeService, wService wishlistService)
 				Title:        wishlist.Title,
 				Description:  wishlist.Description,
 				IsDefault:    wishlist.IsDefault,
-				Avatar:       nil, // todo
+				Avatar:       avatarAnswer,
 				IsMyWishlist: currentUserID != nil && *currentUserID == wishlist.UserID,
 			},
 			IsSubscribed: subscribe != nil,

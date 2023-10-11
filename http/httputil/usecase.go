@@ -8,6 +8,7 @@ type responseType string
 const (
 	ResponseTypeJson responseType = "json"
 	ResponseTypeHtml responseType = "html"
+	ResponseTypeJpeg responseType = "jpeg"
 )
 
 type HandleResult struct {

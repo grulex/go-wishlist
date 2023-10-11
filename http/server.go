@@ -8,6 +8,7 @@ import (
 	httpUtil "github.com/grulex/go-wishlist/http/httputil"
 	"github.com/grulex/go-wishlist/http/middleware"
 	"github.com/grulex/go-wishlist/http/usecase"
+	"github.com/grulex/go-wishlist/http/usecase/images"
 	"github.com/grulex/go-wishlist/http/usecase/users"
 	"github.com/grulex/go-wishlist/http/usecase/wishlists/add_product_to_wishlist"
 	"github.com/grulex/go-wishlist/http/usecase/wishlists/book_wishlist_item"
@@ -34,12 +35,16 @@ func NewServer(listenAddr string, container *container.ServiceContainer, config 
 	authMiddleware := middleware.NewTelegramAuthMiddleware(container.Auth, container.User, container.Wishlist, config.TelegramBotToken)
 	apiRouter.Use(authMiddleware)
 
+	apiRouter.HandleFunc("/images/{link_base64}", httpUtil.ResponseWrapper(
+		images.MakeGetImageFileHandler(config.TelegramBotToken),
+	)).Methods("GET")
+
 	apiRouter.HandleFunc("/profile", httpUtil.ResponseWrapper(
 		users.MakeGetProfileUsecase(container.Subscribe, container.Wishlist, container.Image),
 	)).Methods("GET")
 
 	apiRouter.HandleFunc("/wishlists/{id}", httpUtil.ResponseWrapper(
-		get_wishlist.MakeGetWishlistUsecase(container.Subscribe, container.Wishlist),
+		get_wishlist.MakeGetWishlistUsecase(container.Subscribe, container.Wishlist, container.Image),
 	)).Methods("GET")
 
 	apiRouter.HandleFunc("/wishlists/{id}", httpUtil.ResponseWrapper(

@@ -171,6 +171,7 @@ func registerTelegramUser(
 
 	user := &userPkg.User{
 		FullName: tgUser.FirstName + " " + tgUser.LastName,
+		Language: userPkg.Language(tgUser.LanguageCode),
 	}
 
 	err = userService.Create(ctx, user)

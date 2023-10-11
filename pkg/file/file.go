@@ -9,9 +9,8 @@ type ID string
 type StorageType string
 
 const (
-	StorageTypeInMemory StorageType = "in_memory"
-	StorageTypePostgres StorageType = "postgres"
-	StorageTypeLink     StorageType = "link"
+	StorageTypeInMemory    StorageType = "in_memory"
+	StorageTypeTelegramBot StorageType = "telegram_bot"
 )
 
 type Link struct {

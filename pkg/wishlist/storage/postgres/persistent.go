@@ -23,7 +23,8 @@ type wishlistPersistent struct {
 func (w wishlistPersistent) ToWishlist() *wishlistPkg.Wishlist {
 	var avatar *imagePkg.ID
 	if w.ImageId != nil {
-		*avatar = imagePkg.ID(*w.ImageId)
+		avatarID := imagePkg.ID(*w.ImageId)
+		avatar = &avatarID
 	}
 	return &wishlistPkg.Wishlist{
 		ID:          wishlistPkg.ID(w.ID),
@@ -41,7 +42,8 @@ func (w wishlistPersistent) ToWishlist() *wishlistPkg.Wishlist {
 func (w wishlistPersistent) FromWishlist(wishlist *wishlistPkg.Wishlist) *wishlistPersistent {
 	var avatar *string
 	if wishlist.Avatar != nil {
-		*avatar = string(*wishlist.Avatar)
+		stringAvatar := string(*wishlist.Avatar)
+		avatar = &stringAvatar
 	}
 	return &wishlistPersistent{
 		ID:          string(wishlist.ID),
@@ -68,7 +70,8 @@ type itemPersistent struct {
 func (i itemPersistent) ToItem() *wishlistPkg.Item {
 	var isBookedBy *userPkg.ID
 	if i.IsBookedBy != nil {
-		*isBookedBy = userPkg.ID(*i.IsBookedBy)
+		userID := userPkg.ID(*i.IsBookedBy)
+		isBookedBy = &userID
 	}
 	return &wishlistPkg.Item{
 		ID:                 wishlistPkg.ItemID{WishlistID: wishlistPkg.ID(i.WishlistID), ProductID: productPkg.ID(i.ProductID)},
@@ -82,7 +85,8 @@ func (i itemPersistent) ToItem() *wishlistPkg.Item {
 func (i itemPersistent) FromItem(item *wishlistPkg.Item) *itemPersistent {
 	var isBookedBy *string
 	if item.IsBookedBy != nil {
-		*isBookedBy = string(*item.IsBookedBy)
+		userIDString := string(*item.IsBookedBy)
+		isBookedBy = &userIDString
 	}
 	return &itemPersistent{
 		WishlistID:         string(item.ID.WishlistID),

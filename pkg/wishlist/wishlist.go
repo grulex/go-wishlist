@@ -21,6 +21,17 @@ type Wishlist struct {
 	UpdatedAt   time.Time
 }
 
+type Wishlists []*Wishlist
+
+func (w Wishlists) GetDefault() *Wishlist {
+	for _, wishlist := range w {
+		if wishlist.IsDefault {
+			return wishlist
+		}
+	}
+	return nil
+}
+
 type Item struct {
 	ID                 ItemID
 	IsBookingAvailable bool

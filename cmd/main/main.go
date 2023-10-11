@@ -56,7 +56,7 @@ func main() {
 	}()
 
 	go func() {
-		b := bot.NewTelegramBot(config.TelegramBotToken, config.TelegramMiniAppUrl, serviceContainer.Wishlist)
+		b := bot.NewTelegramBot(config.TelegramBotToken, config.TelegramMiniAppUrl, serviceContainer)
 		_ = b.Start()
 	}()
 

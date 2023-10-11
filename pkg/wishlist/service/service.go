@@ -41,7 +41,7 @@ func (s *Service) Get(ctx context.Context, id wishlistPkg.ID) (*wishlistPkg.Wish
 	return s.storage.Get(ctx, id)
 }
 
-func (s *Service) GetByUserID(ctx context.Context, userID user.ID) ([]*wishlistPkg.Wishlist, error) {
+func (s *Service) GetByUserID(ctx context.Context, userID user.ID) (wishlistPkg.Wishlists, error) {
 	return s.storage.GetByUserID(ctx, userID)
 }
 

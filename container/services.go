@@ -50,7 +50,7 @@ type userService interface {
 type wishlistService interface {
 	Create(ctx context.Context, wishlist *wishlistPkg.Wishlist) error
 	Get(ctx context.Context, id wishlistPkg.ID) (*wishlistPkg.Wishlist, error)
-	GetByUserID(ctx context.Context, userID userPkg.ID) ([]*wishlistPkg.Wishlist, error)
+	GetByUserID(ctx context.Context, userID userPkg.ID) (wishlistPkg.Wishlists, error)
 	Update(ctx context.Context, wishlist *wishlistPkg.Wishlist) error
 	Archive(ctx context.Context, id wishlistPkg.ID) error
 	Restore(ctx context.Context, id wishlistPkg.ID) error

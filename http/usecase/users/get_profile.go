@@ -17,7 +17,7 @@ type subscribeService interface {
 }
 
 type wishlistService interface {
-	GetByUserID(ctx context.Context, userID userPkg.ID) ([]*wishlistPkg.Wishlist, error)
+	GetByUserID(ctx context.Context, userID userPkg.ID) (wishlistPkg.Wishlists, error)
 }
 
 type imageService interface {

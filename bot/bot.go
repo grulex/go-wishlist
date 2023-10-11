@@ -3,7 +3,6 @@ package bot
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/corona10/goimagehash"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/grulex/go-wishlist/container"
@@ -219,16 +218,13 @@ func (s TelegramBot) createAvatarImage(ctx context.Context, tgUserId int64) (*im
 		middleSizeFile = resp.Photos[0][len(resp.Photos[0])-2:][0]
 	}
 
-	fileResp, err := s.telegramBot.GetFile(tgbotapi.FileConfig{
-		FileID: middleSizeFile.FileID,
-	})
+	fileUrl, err := s.telegramBot.GetFileDirectURL(middleSizeFile.FileID)
 	if err != nil {
 		return nil, err
 	}
 
-	url := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", s.telegramBot.Token, fileResp.FilePath)
 	httpClient := http.Client{}
-	httpResp, err := httpClient.Get(url)
+	httpResp, err := httpClient.Get(fileUrl)
 	if err != nil {
 		return nil, err
 	}

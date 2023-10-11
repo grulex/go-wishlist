@@ -1,7 +1,6 @@
 package images
 
 import (
-	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/gorilla/mux"
 	"github.com/grulex/go-wishlist/http/httputil"
@@ -55,7 +54,7 @@ func MakeGetImageFileHandler(telegramBotToken string) httputil.HttpUseCase {
 			}
 		}
 
-		telegramUrl, err := getTelegramFileUrl(telegramBot, string(link.ID))
+		telegramUrl, err := telegramBot.GetFileDirectURL(string(link.ID))
 		if err != nil {
 			return httputil.HandleResult{
 				Error: &httputil.HandleError{
@@ -84,31 +83,10 @@ func MakeGetImageFileHandler(telegramBotToken string) httputil.HttpUseCase {
 				},
 			}
 		}
-		// read body
-		//body, err := io.ReadAll(resp.Body)
-		//if err != nil {
-		//	return httputil.HandleResult{
-		//		Error: &httputil.HandleError{
-		//			Type:    httputil.ErrorInternal,
-		//			Message: "Error reading file",
-		//		},
-		//	}
-		//}
-		//_ = resp.Body.Close()
 
 		return httputil.HandleResult{
 			Payload: resp.Body,
 			Type:    httputil.ResponseTypeJpeg,
 		}
 	}
-}
-
-func getTelegramFileUrl(telegramBot *tgbotapi.BotAPI, fileID string) (string, error) {
-	fileResp, err := telegramBot.GetFile(tgbotapi.FileConfig{
-		FileID: fileID,
-	})
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", telegramBot.Token, fileResp.FilePath), nil
 }

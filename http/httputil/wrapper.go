@@ -6,10 +6,18 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 )
 
 func ResponseWrapper(f HttpUseCase) http.HandlerFunc {
 	handler := func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("If-None-Match") == "image/jpeg" && r.Header.Get("If-Modified-Since") != "" {
+			t, _ := time.Parse(http.TimeFormat, r.Header.Get("If-Modified-Since"))
+			if t.Add(time.Hour * 24).After(time.Now()) {
+				w.WriteHeader(http.StatusNotModified)
+				return
+			}
+		}
 		result := f(r)
 		if result.HasError() {
 			responseError(result.Error, w)
@@ -71,8 +79,13 @@ func responseOk(result HandleResult, w http.ResponseWriter) {
 	}
 
 	if result.Type == ResponseTypeJpeg {
+		now := time.Now()
 		reader := result.Payload.(io.ReadCloser)
 		w.Header().Set("Content-Type", "image/jpeg")
+		w.Header().Set("Last-Modified", now.Format(http.TimeFormat))
+		w.Header().Set("ETag", "image/jpeg")
+		w.Header().Set("Expires", now.Add(time.Hour).Format(http.TimeFormat))
+		w.Header().Set("Cache-Control", "public,max-age=86400;")
 		w.WriteHeader(http.StatusOK)
 		if n, err := io.Copy(w, reader); err != nil {
 			log.Println("error writing response", "err", err, "bytesWritten", n)

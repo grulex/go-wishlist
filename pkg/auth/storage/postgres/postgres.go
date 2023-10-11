@@ -27,7 +27,19 @@ func NewAuthStorage(db *sqlx.DB) *Storage {
 	return &Storage{db: db}
 }
 
-func (s *Storage) Upsert(ctx context.Context, a *authPkg.Auth) error {
+func (s *Storage) StartCreateTransaction(ctx context.Context) (*sqlx.Tx, error) {
+	tx := s.db.MustBeginTx(ctx, nil)
+	// lock table
+	query := `LOCK TABLE auth IN EXCLUSIVE MODE`
+	_, err := tx.ExecContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+
+func (s *Storage) UpsertByTransaction(ctx context.Context, tx *sqlx.Tx, a *authPkg.Auth) error {
 	query := `
 		INSERT INTO auth (
 			user_id,
@@ -50,13 +62,16 @@ func (s *Storage) Upsert(ctx context.Context, a *authPkg.Auth) error {
 		CreatedAt: a.CreatedAt,
 		UpdatedAt: a.UpdatedAt,
 	}
-	_, err := s.db.NamedExecContext(ctx, query, authPersistent)
+	_, err := tx.NamedExecContext(ctx, query, authPersistent)
+	if err != nil {
+		return err
+	}
 
 	return err
 }
 
 func (s *Storage) Get(ctx context.Context, method authPkg.Method, socialID authPkg.SocialID) (*authPkg.Auth, error) {
-	query := `SELECT * FROM auth WHERE method = $1 AND social_id = $2`
+	query := `SELECT * FROM auth WHERE method = $1 AND social_id = $2 FOR UPDATE`
 	a := &authPersistent{}
 	err := s.db.GetContext(ctx, a, query, method, socialID)
 	if err != nil {

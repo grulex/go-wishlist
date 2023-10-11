@@ -14,8 +14,10 @@ require (
 
 require (
 	github.com/cockroachdb/apd/v3 v3.1.2 // indirect
+	github.com/corona10/goimagehash v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 )

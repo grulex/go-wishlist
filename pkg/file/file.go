@@ -11,6 +11,7 @@ type StorageType string
 const (
 	StorageTypeInMemory StorageType = "in_memory"
 	StorageTypePostgres StorageType = "postgres"
+	StorageTypeLink     StorageType = "link"
 )
 
 type Link struct {

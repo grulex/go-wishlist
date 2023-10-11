@@ -14,7 +14,7 @@ type Wishlist struct {
 	UserID      user.ID
 	IsDefault   bool
 	Title       string
-	Avatar      *image.Image
+	Avatar      *image.ID
 	Description string
 	IsArchived  bool
 	CreatedAt   time.Time

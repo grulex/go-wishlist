@@ -35,7 +35,7 @@ func NewServer(listenAddr string, container *container.ServiceContainer, config 
 	apiRouter.Use(authMiddleware)
 
 	apiRouter.HandleFunc("/profile", httpUtil.ResponseWrapper(
-		users.MakeGetProfileUsecase(container.Subscribe, container.Wishlist),
+		users.MakeGetProfileUsecase(container.Subscribe, container.Wishlist, container.Image),
 	)).Methods("GET")
 
 	apiRouter.HandleFunc("/wishlists/{id}", httpUtil.ResponseWrapper(

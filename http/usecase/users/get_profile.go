@@ -5,6 +5,7 @@ import (
 	"github.com/grulex/go-wishlist/http/httputil"
 	"github.com/grulex/go-wishlist/http/usecase/types"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
+	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	subscribePkg "github.com/grulex/go-wishlist/pkg/subscribe"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
@@ -19,7 +20,11 @@ type wishlistService interface {
 	GetByUserID(ctx context.Context, userID userPkg.ID) ([]*wishlistPkg.Wishlist, error)
 }
 
-func MakeGetProfileUsecase(subscribesService subscribeService, wService wishlistService) httputil.HttpUseCase {
+type imageService interface {
+	Get(ctx context.Context, id imagePkg.ID) (*imagePkg.Image, error)
+}
+
+func MakeGetProfileUsecase(subscribesService subscribeService, wService wishlistService, iService imageService) httputil.HttpUseCase {
 	return func(r *http.Request) httputil.HandleResult {
 		auth, ok := authPkg.FromContext(r.Context())
 		if !ok {
@@ -67,9 +72,18 @@ func MakeGetProfileUsecase(subscribesService subscribeService, wService wishlist
 
 		var avatarAnswer *types.Image
 		if defaultWishlist.Avatar != nil {
+			avatar, err := iService.Get(r.Context(), *defaultWishlist.Avatar)
+			if err != nil {
+				return httputil.HandleResult{
+					Error: &httputil.HandleError{
+						Type:    httputil.ErrorInternal,
+						Message: "Error getting avatar",
+					},
+				}
+			}
 			avatarAnswer = &types.Image{
-				ID:   defaultWishlist.Avatar.ID,
-				Link: "", // todo
+				ID:   *defaultWishlist.Avatar,
+				Link: string(avatar.FileLink.ID),
 			}
 		}
 

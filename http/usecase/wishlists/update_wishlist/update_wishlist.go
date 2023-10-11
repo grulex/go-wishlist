@@ -57,7 +57,7 @@ func MakeUpdateWishlistUsecase(wService wishlistService) httputil.HttpUseCase {
 			}
 		}
 
-		handleResult, valid := isValidWishlistAccess(r, wishlist, wishlistID, auth.UserID)
+		handleResult, valid := isValidWishlistAccess(wishlist, auth.UserID)
 		if !valid {
 			return handleResult
 		}
@@ -91,7 +91,7 @@ func MakeUpdateWishlistUsecase(wService wishlistService) httputil.HttpUseCase {
 	}
 }
 
-func isValidWishlistAccess(r *http.Request, wishlist *wishlistPkg.Wishlist, wishlistID string, currentUserID userPkg.ID) (httputil.HandleResult, bool) {
+func isValidWishlistAccess(wishlist *wishlistPkg.Wishlist, currentUserID userPkg.ID) (httputil.HandleResult, bool) {
 	if wishlist == nil {
 		return httputil.HandleResult{
 			Error: &httputil.HandleError{

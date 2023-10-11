@@ -9,11 +9,13 @@ import (
 	subscribePkg "github.com/grulex/go-wishlist/pkg/subscribe"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
+	"github.com/jmoiron/sqlx"
 )
 
 type authService interface {
 	Get(ctx context.Context, method authPkg.Method, socialID authPkg.SocialID) (*authPkg.Auth, error)
-	Create(ctx context.Context, auth *authPkg.Auth) error
+	MakeCreateTransaction(ctx context.Context) (*sqlx.Tx, error)
+	CreateByTransaction(ctx context.Context, tx *sqlx.Tx, auth *authPkg.Auth) error
 }
 
 type fileService interface {

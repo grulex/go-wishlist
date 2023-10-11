@@ -12,6 +12,7 @@ import (
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
+	"github.com/jmoiron/sqlx"
 	"gopkg.in/guregu/null.v4"
 	httpPkg "net/http"
 	"net/url"
@@ -22,7 +23,8 @@ import (
 
 type authService interface {
 	Get(ctx context.Context, method authPkg.Method, socialID authPkg.SocialID) (*authPkg.Auth, error)
-	Create(ctx context.Context, auth *authPkg.Auth) error
+	MakeCreateTransaction(ctx context.Context) (*sqlx.Tx, error)
+	CreateByTransaction(ctx context.Context, tx *sqlx.Tx, auth *authPkg.Auth) error
 }
 
 type userService interface {
@@ -157,11 +159,21 @@ func registerTelegramUser(
 	wService wishlistService,
 	tgUser telegramUser,
 ) (*authPkg.Auth, error) {
+	createAuthTransaction, err := authService.MakeCreateTransaction(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func(createAuthTransaction *sqlx.Tx) {
+		if createAuthTransaction != nil {
+			_ = createAuthTransaction.Rollback()
+		}
+	}(createAuthTransaction)
+
 	user := &userPkg.User{
 		FullName: tgUser.FirstName + " " + tgUser.LastName,
 	}
 
-	err := userService.Create(ctx, user)
+	err = userService.Create(ctx, user)
 	if err != nil {
 		return nil, err
 	}
@@ -190,10 +202,13 @@ func registerTelegramUser(
 		SocialID: authPkg.SocialID(null.NewString(strconv.Itoa(tgUser.ID), true)),
 		UserID:   user.ID,
 	}
-	err = authService.Create(ctx, auth)
+	err = authService.CreateByTransaction(ctx, createAuthTransaction, auth)
 	if err != nil {
 		return nil, err
 	}
+	if createAuthTransaction != nil {
+		err = createAuthTransaction.Commit()
+	}
 
-	return auth, nil
+	return auth, err
 }

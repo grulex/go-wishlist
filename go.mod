@@ -13,11 +13,16 @@ require (
 )
 
 require (
+	github.com/Junzki/link-preview v0.0.0-20190616153136-4d94cb3f9ebf // indirect
+	github.com/PuerkitoBio/goquery v1.5.0 // indirect
+	github.com/andybalholm/cascadia v1.0.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.1.2 // indirect
 	github.com/corona10/goimagehash v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/mvdan/xurls v1.1.0 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 )

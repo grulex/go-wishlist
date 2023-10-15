@@ -3,15 +3,18 @@ package bot
 import (
 	"context"
 	"errors"
+	LinkPreview "github.com/Junzki/link-preview"
 	"github.com/corona10/goimagehash"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/grulex/go-wishlist/container"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
 	filePkg "github.com/grulex/go-wishlist/pkg/file"
 	imagePkg "github.com/grulex/go-wishlist/pkg/image"
+	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
 	"github.com/jmoiron/sqlx"
+	"github.com/mvdan/xurls"
 	"gopkg.in/guregu/null.v4"
 	"image/jpeg"
 	"log"
@@ -104,6 +107,39 @@ func (s TelegramBot) Start() error {
 				}
 			}
 		}
+
+		if update.Message != nil {
+			urlsParser := xurls.Relaxed
+			urls := urlsParser.FindAllString(update.Message.Text, -1)
+			if len(urls) == 0 {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID,
+					"I can add a wish to your Wishlist by external link! "+
+						"Just send me an URL (\"https://...\") and I'll try to create a wish from it.")
+				_, err := s.telegramBot.Send(msg)
+				if err != nil {
+					log.Println(err)
+				}
+				continue
+			}
+
+			err := s.createWishItemsFromUrls(context.Background(), urls, update.Message.From.ID)
+			if err != nil {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID,
+					"Sorry, I can't create a wish from this link ((")
+				_, err := s.telegramBot.Send(msg)
+				if err != nil {
+					log.Println(err)
+				}
+				continue
+			}
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID,
+				"Done! See your wishlist")
+			_, err = s.telegramBot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+
 	}
 	return nil
 }
@@ -266,4 +302,67 @@ func (s TelegramBot) createAvatarImage(ctx context.Context, tgUserId int64) (*im
 		return nil, err
 	}
 	return image, nil
+}
+
+func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string, tgUserID int64) error {
+	userSocialID := authPkg.SocialID(null.NewString(strconv.Itoa(int(tgUserID)), true))
+	auth, err := s.container.Auth.Get(ctx, authPkg.MethodTelegram, userSocialID)
+	if err != nil {
+		return err
+	}
+	var wID *wishlistPkg.ID
+	if auth != nil {
+		user, err := s.container.User.Get(ctx, auth.UserID)
+		if err != nil {
+			return err
+		}
+		wishlists, err := s.container.Wishlist.GetByUserID(ctx, user.ID)
+		if err != nil {
+			return err
+		}
+		wishlist := wishlists.GetDefault()
+		if err != nil {
+			return err
+		}
+		wID = &wishlist.ID
+	}
+
+	if wID == nil {
+		return errors.New("can't find wishlist")
+	}
+
+	for _, url := range urls {
+		linkResult, err := LinkPreview.Preview(url, nil)
+		if err != nil {
+			return err
+		}
+
+		title := linkResult.Title
+		if title == "" {
+			title = "Product by attached link"
+		}
+
+		product := &productPkg.Product{
+			Title:       title,
+			Description: null.NewString(linkResult.Description, true),
+			Url:         null.NewString(url, true),
+		}
+		err = s.container.Product.Create(ctx, product)
+		if err != nil {
+			return err
+		}
+		item := &wishlistPkg.Item{
+			ID: wishlistPkg.ItemID{
+				WishlistID: *wID,
+				ProductID:  product.ID,
+			},
+			IsBookingAvailable: true,
+		}
+		err = s.container.Wishlist.AddWishlistItem(ctx, item)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

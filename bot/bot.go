@@ -19,8 +19,10 @@ import (
 	"image/jpeg"
 	"log"
 	"net/http"
+	urlPkg "net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type TelegramBot struct {
@@ -94,6 +96,9 @@ func (s TelegramBot) Start() error {
 					continue
 				}
 
+				// waiting for render "/start" message
+				time.Sleep(time.Millisecond * 100)
+
 				button := getButton(" 🎁Create Wishlist!", s.miniAppUrl)
 				msg := tgbotapi.NewMessage(update.MyChatMember.Chat.ID,
 					"Hello, I'm Wishlist Bot!\n\nI can help you to manage your wishlist.\n\n"+
@@ -101,6 +106,7 @@ func (s TelegramBot) Start() error {
 						"Also, you can type @"+s.telegramBot.Self.UserName+" and your username in "+
 						"any chat and I'll share your wishlist.")
 				msg.ReplyMarkup = &button
+				msg.DisableNotification = true
 				_, err = s.telegramBot.Send(msg)
 				if err != nil {
 					log.Println(err)
@@ -109,6 +115,9 @@ func (s TelegramBot) Start() error {
 		}
 
 		if update.Message != nil {
+			if update.Message.Text == "/start" {
+				continue
+			}
 			urlsParser := xurls.Relaxed
 			urls := urlsParser.FindAllString(update.Message.Text, -1)
 			if len(urls) == 0 {
@@ -134,6 +143,7 @@ func (s TelegramBot) Start() error {
 			}
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID,
 				"Done! See your wishlist")
+			msg.DisableNotification = true
 			_, err = s.telegramBot.Send(msg)
 			if err != nil {
 				log.Println(err)
@@ -332,7 +342,12 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 	}
 
 	for _, url := range urls {
-		linkResult, err := LinkPreview.Preview(url, nil)
+		urlObj, err := urlPkg.Parse(url)
+		if urlObj.Scheme == "" {
+			urlObj.Scheme = "https"
+		}
+
+		linkResult, err := LinkPreview.Preview(urlObj.String(), nil)
 		if err != nil {
 			return err
 		}
@@ -342,11 +357,17 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 			title = "Product by attached link"
 		}
 
+		titleRunes := []rune(title)
+		if len(titleRunes) > productPkg.MaxTitleLength {
+			title = string(titleRunes[:productPkg.MaxTitleLength-3]) + "..."
+		}
+
 		product := &productPkg.Product{
 			Title:       title,
 			Description: null.NewString(linkResult.Description, true),
-			Url:         null.NewString(url, true),
+			Url:         null.NewString(urlObj.String(), true),
 		}
+
 		err = s.container.Product.Create(ctx, product)
 		if err != nil {
 			return err

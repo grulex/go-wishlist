@@ -10,6 +10,8 @@ import (
 
 var ErrNotFound = errors.New("product not found")
 
+const MaxTitleLength = 30
+
 type ID string
 
 type Product struct {

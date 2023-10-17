@@ -3,10 +3,10 @@ package add_product_to_wishlist
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"github.com/gorilla/mux"
 	"github.com/grulex/go-wishlist/http/httputil"
 	"github.com/grulex/go-wishlist/http/usecase/types"
+	"github.com/grulex/go-wishlist/http/usecase/wishlists"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
@@ -20,6 +20,7 @@ type wishlistService interface {
 
 type productService interface {
 	Create(ctx context.Context, product *productPkg.Product) error
+	Get(ctx context.Context, id productPkg.ID) (*productPkg.Product, error)
 }
 
 type requestJson struct {
@@ -52,7 +53,7 @@ func MakeAddProductToWishlistUsecase(wService wishlistService, pService productS
 			}
 		}
 
-		handleResult, valid := isValidWishlistAccess(r, wService, wishlistID, auth)
+		handleResult, valid := wishlists.IsValidWishlistAccess(r.Context(), wService, wishlistID, auth)
 		if !valid {
 			return handleResult
 		}
@@ -69,10 +70,6 @@ func MakeAddProductToWishlistUsecase(wService wishlistService, pService productS
 			}
 		}
 
-		if request.Product.ID != nil && *request.Product.ID != "" {
-			return addItemToWishlist(r.Context(), wishlistID, *request.Product.ID, request.IsBookingAvailable, wService)
-		}
-
 		product := &productPkg.Product{
 			Title:       request.Product.Title,
 			Price:       request.Product.PriceFrom,
@@ -80,6 +77,27 @@ func MakeAddProductToWishlistUsecase(wService wishlistService, pService productS
 			Url:         request.Product.Url,
 			ImageID:     nil, // todo
 		}
+
+		// for "copy to my wishlist" feature
+		if request.Product.ID != nil && *request.Product.ID != "" {
+			// todo is cloned from field
+			p, err := pService.Get(r.Context(), *request.Product.ID)
+			if err != nil {
+				return httputil.HandleResult{
+					Error: &httputil.HandleError{
+						Type:    httputil.ErrorInternal,
+						Message: "Error getting product",
+					},
+				}
+			}
+
+			product.Title = p.Title
+			product.Price = p.Price
+			product.Description = p.Description
+			product.Url = p.Url
+			product.ImageID = p.ImageID
+		}
+
 		if err := pService.Create(r.Context(), product); err != nil {
 			return httputil.HandleResult{
 				Error: &httputil.HandleError{
@@ -91,40 +109,6 @@ func MakeAddProductToWishlistUsecase(wService wishlistService, pService productS
 
 		return addItemToWishlist(r.Context(), wishlistID, product.ID, request.IsBookingAvailable, wService)
 	}
-}
-
-func isValidWishlistAccess(r *http.Request, wService wishlistService, wishlistID string, auth *authPkg.Auth) (httputil.HandleResult, bool) {
-	wishlist, err := wService.Get(r.Context(), wishlistPkg.ID(wishlistID))
-	if err != nil && !errors.Is(err, wishlistPkg.ErrNotFound) {
-		return httputil.HandleResult{
-			Error: &httputil.HandleError{
-				Type:    httputil.ErrorInternal,
-				Message: "Error getting wishlist",
-			},
-		}, false
-	}
-	if wishlist == nil {
-		return httputil.HandleResult{
-			Error: &httputil.HandleError{
-				Type:     httputil.ErrorNotFound,
-				ErrorKey: "not_found",
-				Message:  "incorrect path parameter",
-				Err:      nil,
-			},
-		}, false
-	}
-	if wishlist.UserID != auth.UserID {
-		return httputil.HandleResult{
-			Error: &httputil.HandleError{
-				Type:     httputil.ErrorForbidden,
-				ErrorKey: "forbidden",
-				Message:  "you can't add product to wishlist of another user",
-				Err:      nil,
-			},
-		}, false
-	}
-
-	return httputil.HandleResult{}, true
 }
 
 func addItemToWishlist(

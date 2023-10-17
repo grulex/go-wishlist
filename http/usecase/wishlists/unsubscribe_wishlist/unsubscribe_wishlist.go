@@ -44,7 +44,7 @@ func MakeUnSubscribeWishlistUsecase(wService wishlistService, sService subscribe
 			}
 		}
 
-		handleResult, valid := isValidWishlistAccess(r, wService, wishlistID)
+		handleResult, valid := isValidWishlist(r, wService, wishlistID)
 		if !valid {
 			return handleResult
 		}
@@ -63,7 +63,7 @@ func MakeUnSubscribeWishlistUsecase(wService wishlistService, sService subscribe
 	}
 }
 
-func isValidWishlistAccess(r *http.Request, wService wishlistService, wishlistID string) (httputil.HandleResult, bool) {
+func isValidWishlist(r *http.Request, wService wishlistService, wishlistID string) (httputil.HandleResult, bool) {
 	wishlist, err := wService.Get(r.Context(), wishlistPkg.ID(wishlistID))
 	if err != nil && !errors.Is(err, wishlistPkg.ErrNotFound) {
 		return httputil.HandleResult{

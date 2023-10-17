@@ -57,6 +57,7 @@ type wishlistService interface {
 	GetWishlistItem(ctx context.Context, itemID wishlistPkg.ItemID) (*wishlistPkg.Item, error)
 	GetWishlistItems(ctx context.Context, wishlistID wishlistPkg.ID, limit, offset uint) ([]*wishlistPkg.Item, bool, error)
 	AddWishlistItem(ctx context.Context, item *wishlistPkg.Item) error
+	SetBookingAvailabilityForItem(ctx context.Context, itemID wishlistPkg.ItemID, isAvailable bool) error
 	RemoveItem(ctx context.Context, item wishlistPkg.ItemID) error
 	BookItem(ctx context.Context, itemID wishlistPkg.ItemID, userID userPkg.ID) error
 	UnBookItem(ctx context.Context, itemID wishlistPkg.ItemID) error

@@ -19,6 +19,7 @@ import (
 	"github.com/grulex/go-wishlist/http/usecase/wishlists/unbook_wishlist_item"
 	"github.com/grulex/go-wishlist/http/usecase/wishlists/unsubscribe_wishlist"
 	"github.com/grulex/go-wishlist/http/usecase/wishlists/update_wishlist"
+	"github.com/grulex/go-wishlist/http/usecase/wishlists/update_wishlist_item"
 	"net/http"
 	"time"
 )
@@ -66,6 +67,10 @@ func NewServer(listenAddr string, container *container.ServiceContainer, config 
 	apiRouter.HandleFunc("/wishlists/{id}/items", httpUtil.ResponseWrapper(
 		add_product_to_wishlist.MakeAddProductToWishlistUsecase(container.Wishlist, container.Product),
 	)).Methods("POST")
+
+	apiRouter.HandleFunc("/wishlists/{id}/items/{productId}", httpUtil.ResponseWrapper(
+		update_wishlist_item.MakeUpdateWishlistItemUsecase(container.Wishlist, container.Product),
+	)).Methods("PUT")
 
 	apiRouter.HandleFunc("/wishlists/{id}/items/{productId}/book", httpUtil.ResponseWrapper(
 		book_wishlist_item.MakeBookWishlistItemUsecase(container.Wishlist),

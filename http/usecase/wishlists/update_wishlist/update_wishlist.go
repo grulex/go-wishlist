@@ -7,8 +7,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/grulex/go-wishlist/http/httputil"
 	"github.com/grulex/go-wishlist/http/usecase/types"
+	"github.com/grulex/go-wishlist/http/usecase/wishlists"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
-	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
 	"net/http"
 )
@@ -57,7 +57,7 @@ func MakeUpdateWishlistUsecase(wService wishlistService) httputil.HttpUseCase {
 			}
 		}
 
-		handleResult, valid := isValidWishlistAccess(wishlist, auth.UserID)
+		handleResult, valid := wishlists.IsValidWishlistAccess(r.Context(), wService, wishlistID, auth)
 		if !valid {
 			return handleResult
 		}
@@ -89,29 +89,4 @@ func MakeUpdateWishlistUsecase(wService wishlistService) httputil.HttpUseCase {
 
 		return httputil.HandleResult{}
 	}
-}
-
-func isValidWishlistAccess(wishlist *wishlistPkg.Wishlist, currentUserID userPkg.ID) (httputil.HandleResult, bool) {
-	if wishlist == nil {
-		return httputil.HandleResult{
-			Error: &httputil.HandleError{
-				Type:     httputil.ErrorNotFound,
-				ErrorKey: "not_found",
-				Message:  "incorrect path parameter",
-				Err:      nil,
-			},
-		}, false
-	}
-	if wishlist.UserID != currentUserID {
-		return httputil.HandleResult{
-			Error: &httputil.HandleError{
-				Type:     httputil.ErrorForbidden,
-				ErrorKey: "forbidden",
-				Message:  "you can't remove product from wishlist of another user",
-				Err:      nil,
-			},
-		}, false
-	}
-
-	return httputil.HandleResult{}, true
 }

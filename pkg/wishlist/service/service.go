@@ -86,6 +86,21 @@ func (s *Service) AddWishlistItem(ctx context.Context, item *wishlistPkg.Item) e
 	return s.storage.UpsertWishlistItem(ctx, item)
 }
 
+func (s *Service) SetBookingAvailabilityForItem(ctx context.Context, itemID wishlistPkg.ItemID, isAvailable bool) error {
+	item, err := s.storage.GetWishlistItemByID(ctx, itemID)
+	if err != nil {
+		return err
+	}
+
+	item.IsBookingAvailable = isAvailable
+	if !isAvailable {
+		item.IsBookedBy = nil
+	}
+	item.UpdatedAt = time.Now().UTC()
+
+	return s.storage.UpsertWishlistItem(ctx, item)
+}
+
 func (s *Service) RemoveItem(ctx context.Context, item wishlistPkg.ItemID) error {
 	return s.storage.DeleteWishlistItem(ctx, item)
 }

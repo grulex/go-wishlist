@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"github.com/corona10/goimagehash"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -116,14 +117,25 @@ func (s TelegramBot) Start() error {
 
 		if update.Message != nil {
 			if update.Message.Text == "/start" {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID,
+					"☝️One more tip!\n I can add a Wish to your List by external link!\n"+
+						"Just *share* the link with me, and I'll try to create a wish from it.")
+				msg.ParseMode = tgbotapi.ModeMarkdown
+				msg.DisableNotification = true
+				_, err := s.telegramBot.Send(msg)
+				if err != nil {
+					log.Println(err)
+				}
 				continue
 			}
 			urlsParser := xurls.Relaxed
 			urls := urlsParser.FindAllString(update.Message.Text, -1)
 			if len(urls) == 0 {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID,
-					"I can add a wish to your Wishlist by external link! "+
-						"Just send me an URL (\"https://...\") and I'll try to create a wish from it.")
+					" I can add a Wish to your List by external link!\n"+
+						"Just *share* the link with me, and I'll try to create a wish from it.")
+				msg.ParseMode = tgbotapi.ModeMarkdown
+				msg.DisableNotification = true
 				_, err := s.telegramBot.Send(msg)
 				if err != nil {
 					log.Println(err)
@@ -131,23 +143,7 @@ func (s TelegramBot) Start() error {
 				continue
 			}
 
-			err := s.createWishItemsFromUrls(context.Background(), urls, update.Message.From.ID)
-			if err != nil {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID,
-					"Sorry, I can't create a wish from this link ((")
-				_, err := s.telegramBot.Send(msg)
-				if err != nil {
-					log.Println(err)
-				}
-				continue
-			}
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID,
-				"Done! See your wishlist")
-			msg.DisableNotification = true
-			_, err = s.telegramBot.Send(msg)
-			if err != nil {
-				log.Println(err)
-			}
+			go s.createWishItemsFromUrls(context.Background(), urls, update.Message.From.ID, update.Message.Chat.ID)
 		}
 
 	}
@@ -314,33 +310,48 @@ func (s TelegramBot) createAvatarImage(ctx context.Context, tgUserId int64) (*im
 	return image, nil
 }
 
-func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string, tgUserID int64) error {
+func (s TelegramBot) sendErrorToChat(chatID int64) {
+	msg := tgbotapi.NewMessage(chatID,
+		"Sorry, I can't do that now. Please, try again later")
+	_, err := s.telegramBot.Send(msg)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string, tgUserID, chatID int64) {
 	userSocialID := authPkg.SocialID(null.NewString(strconv.Itoa(int(tgUserID)), true))
 	auth, err := s.container.Auth.Get(ctx, authPkg.MethodTelegram, userSocialID)
 	if err != nil {
-		return err
+		s.sendErrorToChat(chatID)
+		return
 	}
 	var wID *wishlistPkg.ID
 	if auth != nil {
 		user, err := s.container.User.Get(ctx, auth.UserID)
 		if err != nil {
-			return err
+			s.sendErrorToChat(chatID)
+			return
 		}
 		wishlists, err := s.container.Wishlist.GetByUserID(ctx, user.ID)
 		if err != nil {
-			return err
+			s.sendErrorToChat(chatID)
+			return
 		}
 		wishlist := wishlists.GetDefault()
 		if err != nil {
-			return err
+			s.sendErrorToChat(chatID)
+			return
 		}
 		wID = &wishlist.ID
 	}
 
 	if wID == nil {
-		return errors.New("can't find wishlist")
+		s.sendErrorToChat(chatID)
+		return
 	}
 
+	resultProductByUrl := make(map[string]*productPkg.Product)
 	for _, url := range urls {
 		urlObj, err := urlPkg.Parse(url)
 		if urlObj.Scheme == "" {
@@ -373,7 +384,8 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 
 		err = s.container.Product.Create(ctx, product)
 		if err != nil {
-			return err
+			resultProductByUrl[url] = nil
+			continue
 		}
 		item := &wishlistPkg.Item{
 			ID: wishlistPkg.ItemID{
@@ -384,9 +396,38 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 		}
 		err = s.container.Wishlist.AddWishlistItem(ctx, item)
 		if err != nil {
-			return err
+			resultProductByUrl[url] = nil
+			continue
 		}
+		resultProductByUrl[url] = product
 	}
 
-	return nil
+	for _, prod := range resultProductByUrl {
+		if prod != nil {
+			description := "_ <empty> _"
+			if prod.Description.String != "" {
+				description = prod.Description.String
+			}
+			msg := tgbotapi.NewMessage(chatID,
+				"Wish added to your List!\n\n"+
+					"*Title:* "+prod.Title+"\n"+
+					"*Description:* "+description+"\n\n"+
+					"Open your new [Wish]("+s.makeLinkToItem(*wID, prod.ID)+") to see it.",
+			)
+			msg.DisableNotification = true
+			msg.ParseMode = tgbotapi.ModeMarkdown
+			msg.DisableWebPagePreview = true
+			_, err := s.telegramBot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
+}
+
+func (s TelegramBot) makeLinkToItem(wishlistID wishlistPkg.ID, productID productPkg.ID) string {
+	miniAppInternalRoute := "/wishlists/" + string(wishlistID) + "/items/" + string(productID)
+
+	queryBase64 := base64.StdEncoding.EncodeToString([]byte(miniAppInternalRoute))
+	return s.miniAppUrl + "?startapp=-" + queryBase64
 }

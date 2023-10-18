@@ -20,10 +20,6 @@ jobs:
           git pull
           docker build -t telegram-wishlist-backend .
           docker rm -f telegram-wishlist-backend
-          docker run -d --name=telegram-wishlist-frontend --init --restart=always -p 3001:3000 \
-          -e BACKEND_HOST="${{ secrets.BACKEND_HOST }}" \
-          -e TG_MINIAPP_URL="${{ secrets.TG_MINIAPP_URL }}" \
-          telegram-wishlist-frontend
           docker run -d --name=telegram-wishlist-backend --restart=always -p 8083:8080 \
             -e TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
             -e TELEGRAM_MINI_APP_URL="${{ secrets.TELEGRAM_MINI_APP_URL }}" \

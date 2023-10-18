@@ -410,7 +410,7 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 			}
 			msg := tgbotapi.NewMessage(chatID,
 				"Wish added to your List!\n\n"+
-					"*Title:* "+prod.Title+"\n"+
+					"*Title:*\n"+prod.Title+"\n\n"+
 					"*Description:* "+description+"\n\n"+
 					"Open your new [Wish]("+s.makeLinkToItem(*wID, prod.ID)+") to see it.",
 			)

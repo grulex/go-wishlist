@@ -129,6 +129,9 @@ func (scraper *scraper) getDocument() (*Document, error) {
 			_ = Body.Close()
 		}(resp.Body)
 	}
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("status code %d", resp.StatusCode)
+	}
 	if err != nil {
 		return nil, err
 	}

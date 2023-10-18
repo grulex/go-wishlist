@@ -347,14 +347,17 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 			urlObj.Scheme = "https"
 		}
 
-		linkResult, err := scrapper.Scrape(urlObj.String(), 5)
-		if err != nil {
-			return err
+		linkResult, _ := scrapper.Scrape(urlObj.String(), 5)
+
+		title := ""
+		description := ""
+		if linkResult != nil {
+			title = linkResult.Preview.Title
+			description = linkResult.Preview.Description
 		}
 
-		title := linkResult.Preview.Title
 		if title == "" {
-			title = "Product by attached link"
+			title = "Wish by attached link"
 		}
 
 		titleRunes := []rune(title)
@@ -364,7 +367,7 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 
 		product := &productPkg.Product{
 			Title:       title,
-			Description: null.NewString(linkResult.Preview.Description, true),
+			Description: null.NewString(description, true),
 			Url:         null.NewString(urlObj.String(), true),
 		}
 

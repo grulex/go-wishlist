@@ -3,7 +3,6 @@ package bot
 import (
 	"context"
 	"errors"
-	LinkPreview "github.com/Junzki/link-preview"
 	"github.com/corona10/goimagehash"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/grulex/go-wishlist/container"
@@ -13,6 +12,7 @@ import (
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
+	"github.com/grulex/go-wishlist/scrapper"
 	"github.com/jmoiron/sqlx"
 	"github.com/mvdan/xurls"
 	"gopkg.in/guregu/null.v4"
@@ -347,12 +347,12 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 			urlObj.Scheme = "https"
 		}
 
-		linkResult, err := LinkPreview.Preview(urlObj.String(), nil)
+		linkResult, err := scrapper.Scrape(urlObj.String(), 5)
 		if err != nil {
 			return err
 		}
 
-		title := linkResult.Title
+		title := linkResult.Preview.Title
 		if title == "" {
 			title = "Product by attached link"
 		}
@@ -364,7 +364,7 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 
 		product := &productPkg.Product{
 			Title:       title,
-			Description: null.NewString(linkResult.Description, true),
+			Description: null.NewString(linkResult.Preview.Description, true),
 			Url:         null.NewString(urlObj.String(), true),
 		}
 

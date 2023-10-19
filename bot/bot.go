@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -8,7 +9,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/grulex/go-wishlist/container"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
-	filePkg "github.com/grulex/go-wishlist/pkg/file"
 	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
@@ -18,6 +18,7 @@ import (
 	"github.com/mvdan/xurls"
 	"gopkg.in/guregu/null.v4"
 	"image/jpeg"
+	"io"
 	"log"
 	"net/http"
 	urlPkg "net/url"
@@ -255,12 +256,8 @@ func (s TelegramBot) createAvatarImage(ctx context.Context, tgUserId int64) (*im
 		return nil, nil
 	}
 
-	middleSizeFile := resp.Photos[0][0]
-	if len(resp.Photos[0]) >= 3 {
-		middleSizeFile = resp.Photos[0][len(resp.Photos[0])-2:][0]
-	}
-
-	fileUrl, err := s.telegramBot.GetFileDirectURL(middleSizeFile.FileID)
+	maxSizeFile := resp.Photos[0][len(resp.Photos[0])-1]
+	fileUrl, err := s.telegramBot.GetFileDirectURL(maxSizeFile.FileID)
 	if err != nil {
 		return nil, err
 	}
@@ -270,12 +267,20 @@ func (s TelegramBot) createAvatarImage(ctx context.Context, tgUserId int64) (*im
 	if err != nil {
 		return nil, err
 	}
-	// get image from response
-	httpImage, err := jpeg.Decode(httpResp.Body)
+	defer func(Body io.ReadCloser) {
+		_ = httpResp.Body
+	}(httpResp.Body)
+
+	var body bytes.Buffer
+	copyBody := io.TeeReader(httpResp.Body, &body)
+	httpImage, err := jpeg.Decode(copyBody)
 	if err != nil {
 		return nil, err
 	}
-	_ = httpResp.Body.Close()
+	fileLink, err := s.container.File.UploadPhoto(ctx, &body)
+	if err != nil {
+		return nil, err
+	}
 
 	aHash, err := goimagehash.AverageHash(httpImage)
 	if err != nil {
@@ -291,12 +296,9 @@ func (s TelegramBot) createAvatarImage(ctx context.Context, tgUserId int64) (*im
 	}
 
 	image := &imagePkg.Image{
-		FileLink: filePkg.Link{
-			StorageType: filePkg.StorageTypeTelegramBot,
-			ID:          filePkg.ID(middleSizeFile.FileID),
-		},
-		Width:  uint(httpImage.Bounds().Dx()),
-		Height: uint(httpImage.Bounds().Dy()),
+		FileLink: fileLink,
+		Width:    uint(httpImage.Bounds().Dx()),
+		Height:   uint(httpImage.Bounds().Dy()),
 		Hash: imagePkg.Hash{
 			AHash: aHash.ToString(),
 			DHash: dHash.ToString(),

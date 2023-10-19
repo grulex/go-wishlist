@@ -1,11 +1,10 @@
 package container
 
 import (
-	"github.com/grulex/go-wishlist/config"
 	authSrv "github.com/grulex/go-wishlist/pkg/auth/service"
 	authStore "github.com/grulex/go-wishlist/pkg/auth/storage/postgres"
 	fileSrv "github.com/grulex/go-wishlist/pkg/file/service"
-	fileStore "github.com/grulex/go-wishlist/pkg/file/storage/telegram"
+	fileStore "github.com/grulex/go-wishlist/pkg/file/storage/inmemory"
 	imageSrv "github.com/grulex/go-wishlist/pkg/image/service"
 	imageStore "github.com/grulex/go-wishlist/pkg/image/storage/postgres"
 	productSrv "github.com/grulex/go-wishlist/pkg/product/service"
@@ -29,12 +28,12 @@ type ServiceContainer struct {
 	Wishlist  wishlistService
 }
 
-func NewServiceContainer(db *sqlx.DB, config *config.Config) *ServiceContainer {
+func NewServiceContainer(db *sqlx.DB) *ServiceContainer {
 	authStorage := authStore.NewAuthStorage(db)
 	authService := authSrv.NewAuthService(authStorage)
 
 	fileStorages := make([]fileSrv.FileStorage, 1)
-	fileStorages[0] = fileStore.NewTelegramStorage(config.TgStorageBotToken, config.TgStorageChatID)
+	fileStorages[0] = fileStore.NewFileInMemory()
 	fileService := fileSrv.NewFileService(fileStorages)
 
 	imageStorage := imageStore.NewImageStorage(db)

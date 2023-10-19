@@ -1,11 +1,9 @@
 package inmemory
 
 import (
-	"bytes"
 	"context"
 	"github.com/google/uuid"
 	"github.com/grulex/go-wishlist/pkg/file"
-	"io"
 	"sync"
 )
 
@@ -21,29 +19,24 @@ func NewFileInMemory() *Storage {
 	}
 }
 
-func (s Storage) GetPhotoReader(_ context.Context, fileID file.ID) (io.ReadCloser, error) {
-	s.Lock.RLock()
-	content, ok := s.File[fileID]
-	if !ok {
-		return nil, file.ErrNotFound
-	}
-	s.Lock.RUnlock()
-	reader := bytes.NewReader(content)
-	return io.NopCloser(reader), nil
-}
-
-func (s Storage) UploadPhoto(_ context.Context, reader io.Reader) (file.ID, error) {
+func (s *Storage) Store(_ context.Context, content []byte) (file.ID, error) {
 	s.Lock.Lock()
 	id := file.ID(uuid.NewString())
-	content, err := io.ReadAll(reader)
-	if err != nil {
-		return "", err
-	}
 	s.File[id] = content
 	s.Lock.Unlock()
 	return id, nil
 }
 
-func (s Storage) GetStorageType() file.StorageType {
+func (s *Storage) Get(_ context.Context, id file.ID) ([]byte, error) {
+	s.Lock.RLock()
+	content, ok := s.File[id]
+	if !ok {
+		return nil, file.ErrNotFound
+	}
+	s.Lock.RUnlock()
+	return content, nil
+}
+
+func (s *Storage) GetStorageType() file.StorageType {
 	return file.StorageTypeInMemory
 }

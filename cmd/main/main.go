@@ -37,7 +37,7 @@ func main() {
 		defer func(dbConnect *sqlx.DB) {
 			_ = dbConnect.Close()
 		}(dbConnect)
-		serviceContainer = container.NewServiceContainer(dbConnect)
+		serviceContainer = container.NewServiceContainer(dbConnect, config)
 	} else {
 		serviceContainer = container.NewInMemoryServiceContainer()
 	}

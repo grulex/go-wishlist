@@ -10,6 +10,7 @@ import (
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
 	"github.com/jmoiron/sqlx"
+	"io"
 )
 
 type authService interface {
@@ -19,8 +20,8 @@ type authService interface {
 }
 
 type fileService interface {
-	Upload(ctx context.Context, content []byte, storageType filePkg.StorageType) (*filePkg.Link, error)
-	Download(ctx context.Context, link *filePkg.Link) ([]byte, error)
+	UploadPhoto(ctx context.Context, reader io.Reader) (filePkg.Link, error)
+	Download(ctx context.Context, link filePkg.Link) (io.ReadCloser, error)
 }
 
 type imageService interface {

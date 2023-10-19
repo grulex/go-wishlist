@@ -15,6 +15,7 @@ type StorageType string
 
 const (
 	StorageTypeInMemory    StorageType = "in_memory"
+	StorageTypePostgres    StorageType = "postgres"
 	StorageTypeTelegramBot StorageType = "telegram_bot"
 )
 
@@ -25,10 +26,10 @@ type Link struct {
 	ID          ID
 }
 
-func NewLinkFromBase64(base64Str string) (*Link, error) {
+func NewLinkFromBase64(base64Str string) (Link, error) {
 	decoded, err := base64.StdEncoding.DecodeString(base64Str)
 	if err != nil {
-		return nil, err
+		return Link{}, err
 	}
 
 	var storageType StorageType
@@ -36,12 +37,12 @@ func NewLinkFromBase64(base64Str string) (*Link, error) {
 
 	decodedParts := strings.Split(string(decoded), linkBase64Delimiter)
 	if len(decodedParts) != 2 {
-		return nil, errors.New("incorrect base64 string")
+		return Link{}, errors.New("incorrect base64 string")
 	}
 	storageType = StorageType(decodedParts[0])
 	id = ID(decodedParts[1])
 
-	return &Link{
+	return Link{
 		StorageType: storageType,
 		ID:          id,
 	}, nil

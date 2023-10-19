@@ -21,7 +21,7 @@ func NewFileInMemory() *Storage {
 	}
 }
 
-func (s Storage) GetPhotoReader(_ context.Context, fileID file.ID) (io.ReadCloser, error) {
+func (s Storage) GetFileReader(_ context.Context, fileID file.ID) (io.ReadCloser, error) {
 	s.Lock.RLock()
 	content, ok := s.File[fileID]
 	if !ok {
@@ -32,7 +32,7 @@ func (s Storage) GetPhotoReader(_ context.Context, fileID file.ID) (io.ReadClose
 	return io.NopCloser(reader), nil
 }
 
-func (s Storage) UploadPhoto(_ context.Context, reader io.Reader) (file.ID, error) {
+func (s Storage) UploadFile(_ context.Context, reader io.Reader) (file.ID, error) {
 	s.Lock.Lock()
 	id := file.ID(uuid.NewString())
 	content, err := io.ReadAll(reader)

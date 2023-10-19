@@ -15,6 +15,7 @@ type StorageType string
 
 const (
 	StorageTypeInMemory    StorageType = "in_memory"
+	StorageTypePostgres    StorageType = "postgres"
 	StorageTypeTelegramBot StorageType = "telegram_bot"
 )
 

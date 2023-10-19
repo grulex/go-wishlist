@@ -7,8 +7,8 @@ import (
 )
 
 type FileStorage interface {
-	GetPhotoReader(ctx context.Context, fileID file.ID) (io.ReadCloser, error)
-	UploadPhoto(ctx context.Context, reader io.Reader) (file.ID, error)
+	GetFileReader(ctx context.Context, fileID file.ID) (io.ReadCloser, error)
+	UploadFile(ctx context.Context, reader io.Reader) (file.ID, error)
 	GetStorageType() file.StorageType
 }
 
@@ -36,7 +36,7 @@ func (s *Service) UploadPhoto(ctx context.Context, reader io.Reader) (file.Link,
 	for _, storageType := range s.priority {
 		storage, _ := s.storages[storageType]
 
-		id, err := storage.UploadPhoto(ctx, reader)
+		id, err := storage.UploadFile(ctx, reader)
 		if err != nil {
 			lastErr = err
 			continue
@@ -57,5 +57,5 @@ func (s *Service) Download(ctx context.Context, link file.Link) (io.ReadCloser, 
 		return nil, file.ErrStorageNotDefined
 	}
 
-	return storage.GetPhotoReader(ctx, link.ID)
+	return storage.GetFileReader(ctx, link.ID)
 }

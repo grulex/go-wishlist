@@ -25,7 +25,7 @@ func NewTelegramStorage(token string, chatID int64) *Storage {
 	}
 }
 
-func (s Storage) GetPhotoReader(ctx context.Context, fileID file.ID) (io.ReadCloser, error) {
+func (s Storage) GetFileReader(ctx context.Context, fileID file.ID) (io.ReadCloser, error) {
 	url, err := s.tgBot.GetFileDirectURL(string(fileID))
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (s Storage) GetPhotoReader(ctx context.Context, fileID file.ID) (io.ReadClo
 	return resp.Body, nil
 }
 
-func (s Storage) UploadPhoto(_ context.Context, reader io.Reader) (file.ID, error) {
+func (s Storage) UploadFile(_ context.Context, reader io.Reader) (file.ID, error) {
 	photo := tgbotapi.NewInputMediaPhoto(tgbotapi.FileReader{
 		Name:   "wishes.jpg",
 		Reader: reader,

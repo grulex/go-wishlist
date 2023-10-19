@@ -113,3 +113,16 @@ alter table wishlist_item
 create unique index wishlist_item_wishlist_id_product_id_uindex
     on wishlist_item (wishlist_id, product_id);
 
+create table file
+(
+    id         varchar(255) not null,
+    content    bytea        not null,
+    created_at timestamp    not null
+);
+
+alter table file
+    owner to postgres;
+
+create unique index file_id_uindex
+    on file (id);
+

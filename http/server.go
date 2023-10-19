@@ -37,7 +37,7 @@ func NewServer(listenAddr string, container *container.ServiceContainer, config 
 	apiRouter.Use(authMiddleware)
 
 	apiRouter.HandleFunc("/images/{link_base64}", httpUtil.ResponseWrapper(
-		images.MakeGetImageFileHandler(config.TelegramBotToken),
+		images.MakeGetImageFileHandler(container.File),
 	)).Methods("GET")
 
 	apiRouter.HandleFunc("/profile", httpUtil.ResponseWrapper(

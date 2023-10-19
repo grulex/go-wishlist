@@ -60,13 +60,9 @@ func (s Storage) UploadFile(_ context.Context, reader io.Reader) (file.ID, error
 	}
 
 	sizes := mediaMsg[0].Photo
+	maxSize := sizes[len(sizes)-1]
 
-	middleSizeFile := sizes[0]
-	if len(sizes) >= 3 {
-		middleSizeFile = sizes[len(sizes)-2:][0]
-	}
-
-	return file.ID(middleSizeFile.FileID), nil
+	return file.ID(maxSize.FileID), nil
 }
 
 func (s Storage) GetStorageType() file.StorageType {

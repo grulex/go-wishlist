@@ -84,6 +84,10 @@ func (s *Storage) Get(ctx context.Context, id image.ID) (*image.Image, error) {
 }
 
 func (s *Storage) GetMany(ctx context.Context, ids []image.ID) ([]*image.Image, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
 	query := `SELECT * FROM image WHERE id IN (?)`
 	query, args, err := sqlx.In(query, ids)
 	if err != nil {

@@ -27,6 +27,7 @@ type fileService interface {
 type imageService interface {
 	Create(ctx context.Context, image *imagePkg.Image) error
 	Get(ctx context.Context, id imagePkg.ID) (*imagePkg.Image, error)
+	GetMany(ctx context.Context, ids []imagePkg.ID) ([]*imagePkg.Image, error)
 }
 
 type productService interface {

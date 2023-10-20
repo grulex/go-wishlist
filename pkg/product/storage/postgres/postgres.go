@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/bojanz/currency"
+	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/guregu/null.v4"
@@ -57,10 +58,16 @@ func (s *Storage) Upsert(ctx context.Context, p *productPkg.Product) error {
 		url = :url,
 		updated_at = :updated_at`
 
+	var imageID *string
+	if p.ImageID != nil {
+		imageIDString := string(*p.ImageID)
+		imageID = &imageIDString
+	}
+
 	productPersistent := productPersistent{
 		ID:          string(p.ID),
 		Title:       p.Title,
-		ImageID:     nil,
+		ImageID:     imageID,
 		Price:       p.Price,
 		Description: p.Description,
 		Url:         p.Url,
@@ -81,10 +88,17 @@ func (s *Storage) Get(ctx context.Context, id productPkg.ID) (*productPkg.Produc
 		}
 		return nil, err
 	}
+
+	var imageID *imagePkg.ID
+	if p.ImageID != nil {
+		imageIDString := imagePkg.ID(*p.ImageID)
+		imageID = &imageIDString
+	}
+
 	product := &productPkg.Product{
 		ID:          productPkg.ID(p.ID),
 		Title:       p.Title,
-		ImageID:     nil,
+		ImageID:     imageID,
 		Price:       p.Price,
 		Description: p.Description,
 		Url:         p.Url,
@@ -129,10 +143,16 @@ func (s *Storage) GetMany(ctx context.Context, ids []productPkg.ID) (products []
 		if err != nil {
 			return nil, err
 		}
+
+		var imageID *imagePkg.ID
+		if buf.ImageID != nil {
+			imageIDString := imagePkg.ID(*buf.ImageID)
+			imageID = &imageIDString
+		}
 		product := &productPkg.Product{
 			ID:          productPkg.ID(buf.ID),
 			Title:       buf.Title,
-			ImageID:     nil,
+			ImageID:     imageID,
 			Price:       buf.Price,
 			Description: buf.Description,
 			Url:         buf.Url,

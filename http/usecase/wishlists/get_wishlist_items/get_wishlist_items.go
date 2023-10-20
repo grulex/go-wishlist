@@ -4,8 +4,10 @@ import (
 	"context"
 	"github.com/gorilla/mux"
 	"github.com/grulex/go-wishlist/http/httputil"
+	"github.com/grulex/go-wishlist/http/usecase"
 	"github.com/grulex/go-wishlist/http/usecase/types"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
+	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
@@ -21,7 +23,11 @@ type productService interface {
 	GetMany(ctx context.Context, ids []productPkg.ID) ([]*productPkg.Product, error)
 }
 
-func MakeGetWishlistItemsUsecase(wService wishlistService, productService productService) httputil.HttpUseCase {
+type imageService interface {
+	GetMany(ctx context.Context, ids []imagePkg.ID) ([]*imagePkg.Image, error)
+}
+
+func MakeGetWishlistItemsUsecase(wService wishlistService, productService productService, iService imageService) httputil.HttpUseCase {
 	return func(r *http.Request) httputil.HandleResult {
 		var currentUserID *userPkg.ID
 		auth, ok := authPkg.FromContext(r.Context())
@@ -81,16 +87,45 @@ func MakeGetWishlistItemsUsecase(wService wishlistService, productService produc
 			}
 		}
 
-		productsMap := make(map[productPkg.ID]*productPkg.Product)
+		productsMap := make(map[productPkg.ID]*productPkg.Product, len(products))
+		imageIds := make([]imagePkg.ID, 0, len(products))
 		for _, product := range products {
 			productsMap[product.ID] = product
+			if product.ImageID != nil {
+				imageIds = append(imageIds, *product.ImageID)
+			}
+		}
+
+		images, err := iService.GetMany(r.Context(), imageIds)
+		if err != nil {
+			return httputil.HandleResult{
+				Error: &httputil.HandleError{
+					Type:    httputil.ErrorInternal,
+					Message: "Error getting images",
+				},
+			}
+		}
+
+		imagesMap := make(map[imagePkg.ID]*imagePkg.Image, len(images))
+		for _, image := range images {
+			imagesMap[image.ID] = image
 		}
 
 		var resultItems []types.Item
 		for _, item := range items {
+			product := productsMap[item.ID.ProductID]
 			isBookedByCurrentUser := currentUserID != nil &&
 				item.IsBookedBy != nil &&
 				*item.IsBookedBy == *currentUserID
+			var resImage *types.Image
+			if productsMap[item.ID.ProductID].ImageID != nil {
+				image := imagesMap[*product.ImageID]
+
+				resImage = &types.Image{
+					ID:   *product.ImageID,
+					Link: usecase.GetFileUrl(r, image.FileLink),
+				}
+			}
 			resultItems = append(resultItems, types.Item{
 				ID:                    item.ID,
 				IsBookingAvailable:    item.IsBookingAvailable,
@@ -102,7 +137,7 @@ func MakeGetWishlistItemsUsecase(wService wishlistService, productService produc
 					PriceFrom:   productsMap[item.ID.ProductID].Price,
 					Description: productsMap[item.ID.ProductID].Description,
 					Url:         productsMap[item.ID.ProductID].Url,
-					Image:       nil, // todo
+					Image:       resImage,
 				},
 			})
 		}

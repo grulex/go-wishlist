@@ -82,3 +82,40 @@ func (s *Storage) Get(ctx context.Context, id image.ID) (*image.Image, error) {
 		CreatedAt: a.CreatedAt,
 	}, nil
 }
+
+func (s *Storage) GetMany(ctx context.Context, ids []image.ID) ([]*image.Image, error) {
+	query := `SELECT * FROM image WHERE id IN (?)`
+	query, args, err := sqlx.In(query, ids)
+	if err != nil {
+		return nil, err
+	}
+	query = s.db.Rebind(query)
+
+	rows, err := s.db.QueryxContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer func(rows *sqlx.Rows) {
+		_ = rows.Close()
+	}(rows)
+	var buf imagePersistent
+	var returnImages []*image.Image
+	for rows.Next() {
+		err := rows.StructScan(&buf)
+		if err != nil {
+			return nil, err
+		}
+		returnImages = append(returnImages, &image.Image{
+			ID: image.ID(buf.ID),
+			FileLink: file.Link{
+				StorageType: file.StorageType(buf.StorageType),
+				ID:          file.ID(buf.FileId),
+			},
+			Width:     buf.Width,
+			Height:    buf.Height,
+			Hash:      image.Hash{AHash: buf.Hash, DHash: buf.Hash, PHash: buf.Hash},
+			CreatedAt: buf.CreatedAt,
+		})
+	}
+	return returnImages, nil
+}

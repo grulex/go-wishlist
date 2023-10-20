@@ -61,7 +61,7 @@ func NewServer(listenAddr string, container *container.ServiceContainer, config 
 	)).Methods("POST")
 
 	apiRouter.HandleFunc("/wishlists/{id}/items", httpUtil.ResponseWrapper(
-		get_wishlist_items.MakeGetWishlistItemsUsecase(container.Wishlist, container.Product),
+		get_wishlist_items.MakeGetWishlistItemsUsecase(container.Wishlist, container.Product, container.Image),
 	)).Methods("GET")
 
 	apiRouter.HandleFunc("/wishlists/{id}/items", httpUtil.ResponseWrapper(

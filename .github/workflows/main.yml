@@ -19,18 +19,6 @@ jobs:
           cd ${{ secrets.BACKEND_APP_DIRECTORY }}
           git pull
           docker build -t telegram-wishlist-backend .
-          docker rm -f telegram-wishlist-backend
-          docker run -d --name=telegram-wishlist-backend --restart=always -p 8083:8080 \
-            -e TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
-            -e TELEGRAM_MINI_APP_URL="${{ secrets.TELEGRAM_MINI_APP_URL }}" \
-            -e TELEGRAM_STORAGE_BOT_TOKEN="${{ secrets.TELEGRAM_STORAGE_BOT_TOKEN }}" \
-            -e TELEGRAM_STORAGE_CHAT_ID="${{ secrets.TELEGRAM_STORAGE_CHAT_ID }}" \
-            -e PG_HOST="${{ secrets.PG_HOST }}" \
-            -e PG_PORT="${{ secrets.PG_PORT }}" \
-            -e PG_DATABASE="${{ secrets.PG_DATABASE }}" \
-            -e PG_USER="${{ secrets.PG_USER }}" \
-            -e PG_PASSWORD="${{ secrets.PG_PASSWORD }}" \
-            telegram-wishlist-backend
   staging-deploy:
     name: Staging Deploy
     runs-on: ubuntu-latest

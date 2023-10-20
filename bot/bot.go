@@ -9,6 +9,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/grulex/go-wishlist/container"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
+	"github.com/grulex/go-wishlist/pkg/file"
 	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
@@ -364,9 +365,28 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 
 		title := ""
 		description := ""
+		var imageID *imagePkg.ID
 		if linkResult != nil {
 			title = linkResult.Preview.Title
 			description = linkResult.Preview.Description
+			if len(linkResult.Preview.Images) != 0 {
+				link := file.Link{
+					StorageType: file.StorageTypeRemoteLink,
+					ID:          file.ID(linkResult.Preview.Images[0]),
+				}
+				image := &imagePkg.Image{
+					FileLink: link,
+					Width:    0,
+					Height:   0,
+					Hash:     imagePkg.Hash{},
+				}
+				err := s.container.Image.Create(ctx, image)
+				if err != nil {
+					resultProductByUrl[url] = nil
+					continue
+				}
+				imageID = &image.ID
+			}
 		}
 
 		if title == "" {
@@ -382,6 +402,7 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 			Title:       title,
 			Description: null.NewString(description, true),
 			Url:         null.NewString(urlObj.String(), true),
+			ImageID:     imageID,
 		}
 
 		err = s.container.Product.Create(ctx, product)

@@ -17,6 +17,7 @@ const (
 	StorageTypeInMemory    StorageType = "in_memory"
 	StorageTypePostgres    StorageType = "postgres"
 	StorageTypeTelegramBot StorageType = "telegram_bot"
+	StorageTypeRemoteLink  StorageType = "remote_link"
 )
 
 const linkBase64Delimiter = ":"

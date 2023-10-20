@@ -10,6 +10,7 @@ import (
 type storage interface {
 	Upsert(ctx context.Context, image *imagePkg.Image) error
 	Get(ctx context.Context, id imagePkg.ID) (*imagePkg.Image, error)
+	GetMany(ctx context.Context, ids []imagePkg.ID) ([]*imagePkg.Image, error)
 }
 
 type Service struct {
@@ -30,4 +31,8 @@ func (s *Service) Create(ctx context.Context, image *imagePkg.Image) error {
 
 func (s *Service) Get(ctx context.Context, id imagePkg.ID) (*imagePkg.Image, error) {
 	return s.storage.Get(ctx, id)
+}
+
+func (s *Service) GetMany(ctx context.Context, ids []imagePkg.ID) ([]*imagePkg.Image, error) {
+	return s.storage.GetMany(ctx, ids)
 }

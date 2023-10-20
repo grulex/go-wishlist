@@ -1,14 +1,14 @@
-name: Remote update execution
+name: Deploy
 on:
   push:
     branches:
       - main
 jobs:
   build:
-    name: Redeploy
+    name: Build Image
     runs-on: ubuntu-latest
     steps:
-    - name: Docker build and restart on digital ocean
+    - name: Docker build
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SSH_HOST }}
@@ -19,6 +19,58 @@ jobs:
           cd ${{ secrets.BACKEND_APP_DIRECTORY }}
           git pull
           docker build -t telegram-wishlist-backend .
+          docker rm -f telegram-wishlist-backend
+          docker run -d --name=telegram-wishlist-backend --restart=always -p 8083:8080 \
+            -e TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
+            -e TELEGRAM_MINI_APP_URL="${{ secrets.TELEGRAM_MINI_APP_URL }}" \
+            -e TELEGRAM_STORAGE_BOT_TOKEN="${{ secrets.TELEGRAM_STORAGE_BOT_TOKEN }}" \
+            -e TELEGRAM_STORAGE_CHAT_ID="${{ secrets.TELEGRAM_STORAGE_CHAT_ID }}" \
+            -e PG_HOST="${{ secrets.PG_HOST }}" \
+            -e PG_PORT="${{ secrets.PG_PORT }}" \
+            -e PG_DATABASE="${{ secrets.PG_DATABASE }}" \
+            -e PG_USER="${{ secrets.PG_USER }}" \
+            -e PG_PASSWORD="${{ secrets.PG_PASSWORD }}" \
+            telegram-wishlist-backend
+  staging-deploy:
+    name: Staging Deploy
+    runs-on: ubuntu-latest
+    environment: staging
+    needs: [build]
+    steps:
+    - name: Staging Deploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        port: 22
+        script: |
+          docker rm -f telegram-wishlist-backend-staging
+          docker run -d --name=telegram-wishlist-backend-staging --restart=always -p 8084:8080 \
+            -e TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
+            -e TELEGRAM_MINI_APP_URL="${{ secrets.TELEGRAM_MINI_APP_URL }}" \
+            -e TELEGRAM_STORAGE_BOT_TOKEN="${{ secrets.TELEGRAM_STORAGE_BOT_TOKEN }}" \
+            -e TELEGRAM_STORAGE_CHAT_ID="${{ secrets.TELEGRAM_STORAGE_CHAT_ID }}" \
+            -e PG_HOST="${{ secrets.PG_HOST }}" \
+            -e PG_PORT="${{ secrets.PG_PORT }}" \
+            -e PG_DATABASE="${{ secrets.PG_DATABASE }}" \
+            -e PG_USER="${{ secrets.PG_USER }}" \
+            -e PG_PASSWORD="${{ secrets.PG_PASSWORD }}" \
+            telegram-wishlist-backend
+  production-deploy:
+    name: Production Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    needs: [staging-deploy]
+    steps:
+    - name: Production Deploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        port: 22
+        script: |
           docker rm -f telegram-wishlist-backend
           docker run -d --name=telegram-wishlist-backend --restart=always -p 8083:8080 \
             -e TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" \

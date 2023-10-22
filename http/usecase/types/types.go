@@ -43,6 +43,7 @@ type Product struct {
 type Image struct {
 	ID   image.ID `json:"id"`
 	Link string   `json:"link,omitempty"`
+	Src  string   `json:"src,omitempty"`
 }
 
 type Subscribe struct {

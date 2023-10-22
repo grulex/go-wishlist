@@ -9,7 +9,10 @@ import (
 	"github.com/grulex/go-wishlist/http/usecase/types"
 	"github.com/grulex/go-wishlist/http/usecase/wishlists"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
+	filePkg "github.com/grulex/go-wishlist/pkg/file"
+	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
+	"io"
 	"net/http"
 )
 
@@ -22,7 +25,15 @@ type requestJson struct {
 	Wishlist types.Wishlist `json:"wishlist"`
 }
 
-func MakeUpdateWishlistUsecase(wService wishlistService) httputil.HttpUseCase {
+type fileService interface {
+	UploadPhoto(ctx context.Context, reader io.Reader) (filePkg.Link, error)
+}
+
+type imageService interface {
+	Create(ctx context.Context, image *imagePkg.Image) error
+}
+
+func MakeUpdateWishlistUsecase(wService wishlistService, fService fileService, iService imageService) httputil.HttpUseCase {
 	return func(r *http.Request) httputil.HandleResult {
 		auth, ok := authPkg.FromContext(r.Context())
 		if !ok {
@@ -71,6 +82,14 @@ func MakeUpdateWishlistUsecase(wService wishlistService) httputil.HttpUseCase {
 					Err:     err,
 				},
 			}
+		}
+
+		if request.Wishlist.Avatar != nil && request.Wishlist.Avatar.ID == "" {
+			newImage, result := wishlists.UploadBase64Image(r.Context(), fService, iService, request.Wishlist.Avatar.Src)
+			if result.Error != nil {
+				return result
+			}
+			wishlist.Avatar = &newImage.ID
 		}
 
 		wishlist.Title = request.Wishlist.Title

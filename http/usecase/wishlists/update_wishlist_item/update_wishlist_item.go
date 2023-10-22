@@ -8,8 +8,11 @@ import (
 	"github.com/grulex/go-wishlist/http/usecase/types"
 	"github.com/grulex/go-wishlist/http/usecase/wishlists"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
+	filePkg "github.com/grulex/go-wishlist/pkg/file"
+	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
+	"io"
 	"net/http"
 )
 
@@ -29,7 +32,20 @@ type productService interface {
 	Update(ctx context.Context, product *productPkg.Product) error
 }
 
-func MakeUpdateWishlistItemUsecase(wService wishlistService, pService productService) httputil.HttpUseCase {
+type fileService interface {
+	UploadPhoto(ctx context.Context, reader io.Reader) (filePkg.Link, error)
+}
+
+type imageService interface {
+	Create(ctx context.Context, image *imagePkg.Image) error
+}
+
+func MakeUpdateWishlistItemUsecase(
+	wService wishlistService,
+	pService productService,
+	fService fileService,
+	iService imageService,
+) httputil.HttpUseCase {
 	return func(r *http.Request) httputil.HandleResult {
 		auth, ok := authPkg.FromContext(r.Context())
 		if !ok {
@@ -111,8 +127,12 @@ func MakeUpdateWishlistItemUsecase(wService wishlistService, pService productSer
 		product.Description = jsonRequest.Product.Description
 		product.Url = jsonRequest.Product.Url
 		product.Price = jsonRequest.Product.PriceFrom
-		if jsonRequest.Product.Image != nil {
-			product.ImageID = &jsonRequest.Product.Image.ID
+		if jsonRequest.Product.Image != nil && jsonRequest.Product.Image.ID == "" {
+			newImage, result := wishlists.UploadBase64Image(r.Context(), fService, iService, jsonRequest.Product.Image.Src)
+			if result.Error != nil {
+				return result
+			}
+			product.ImageID = &newImage.ID
 		}
 		if err := pService.Update(r.Context(), product); err != nil {
 			return httputil.HandleResult{

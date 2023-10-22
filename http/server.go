@@ -49,7 +49,7 @@ func NewServer(listenAddr string, container *container.ServiceContainer, config 
 	)).Methods("GET")
 
 	apiRouter.HandleFunc("/wishlists/{id}", httpUtil.ResponseWrapper(
-		update_wishlist.MakeUpdateWishlistUsecase(container.Wishlist),
+		update_wishlist.MakeUpdateWishlistUsecase(container.Wishlist, container.File, container.Image),
 	)).Methods("PUT")
 
 	apiRouter.HandleFunc("/wishlists/{id}/subscribe", httpUtil.ResponseWrapper(
@@ -65,11 +65,11 @@ func NewServer(listenAddr string, container *container.ServiceContainer, config 
 	)).Methods("GET")
 
 	apiRouter.HandleFunc("/wishlists/{id}/items", httpUtil.ResponseWrapper(
-		add_product_to_wishlist.MakeAddProductToWishlistUsecase(container.Wishlist, container.Product),
+		add_product_to_wishlist.MakeAddProductToWishlistUsecase(container.Wishlist, container.Product, container.File, container.Image),
 	)).Methods("POST")
 
 	apiRouter.HandleFunc("/wishlists/{id}/items/{productId}", httpUtil.ResponseWrapper(
-		update_wishlist_item.MakeUpdateWishlistItemUsecase(container.Wishlist, container.Product),
+		update_wishlist_item.MakeUpdateWishlistItemUsecase(container.Wishlist, container.Product, container.File, container.Image),
 	)).Methods("PUT")
 
 	apiRouter.HandleFunc("/wishlists/{id}/items/{productId}/book", httpUtil.ResponseWrapper(

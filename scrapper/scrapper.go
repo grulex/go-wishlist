@@ -124,6 +124,9 @@ func (scraper *scraper) getDocument() (*Document, error) {
 	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15")
 
 	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
 	if resp != nil {
 		defer func(Body io.ReadCloser) {
 			_ = Body.Close()
@@ -131,9 +134,6 @@ func (scraper *scraper) getDocument() (*Document, error) {
 	}
 	if resp.StatusCode >= 400 {
 		return nil, fmt.Errorf("status code %d", resp.StatusCode)
-	}
-	if err != nil {
-		return nil, err
 	}
 
 	if resp.Request.URL.String() != scraper.getUrl() {

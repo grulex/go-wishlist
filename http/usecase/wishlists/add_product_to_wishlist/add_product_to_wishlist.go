@@ -8,8 +8,11 @@ import (
 	"github.com/grulex/go-wishlist/http/usecase/types"
 	"github.com/grulex/go-wishlist/http/usecase/wishlists"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
+	filePkg "github.com/grulex/go-wishlist/pkg/file"
+	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
+	"io"
 	"net/http"
 )
 
@@ -23,12 +26,25 @@ type productService interface {
 	Get(ctx context.Context, id productPkg.ID) (*productPkg.Product, error)
 }
 
+type fileService interface {
+	UploadPhoto(ctx context.Context, reader io.Reader) (filePkg.Link, error)
+}
+
+type imageService interface {
+	Create(ctx context.Context, image *imagePkg.Image) error
+}
+
 type requestJson struct {
 	Product            types.Product `json:"product"`
 	IsBookingAvailable bool          `json:"is_booking_available,omitempty"`
 }
 
-func MakeAddProductToWishlistUsecase(wService wishlistService, pService productService) httputil.HttpUseCase {
+func MakeAddProductToWishlistUsecase(
+	wService wishlistService,
+	pService productService,
+	fService fileService,
+	iService imageService,
+) httputil.HttpUseCase {
 	return func(r *http.Request) httputil.HandleResult {
 		auth, ok := authPkg.FromContext(r.Context())
 		if !ok {
@@ -75,12 +91,19 @@ func MakeAddProductToWishlistUsecase(wService wishlistService, pService productS
 			Price:       request.Product.PriceFrom,
 			Description: request.Product.Description,
 			Url:         request.Product.Url,
-			ImageID:     nil, // todo
+		}
+
+		if request.Product.Image != nil && request.Product.Image.Src != "" {
+			image, result := wishlists.UploadBase64Image(r.Context(), fService, iService, request.Product.Image.Src)
+			if result.Error != nil {
+				return result
+			}
+			product.ImageID = &image.ID
 		}
 
 		// for "copy to my wishlist" feature
 		if request.Product.ID != nil && *request.Product.ID != "" {
-			// todo is cloned from field
+			// todo "cloned from" field
 			p, err := pService.Get(r.Context(), *request.Product.ID)
 			if err != nil {
 				return httputil.HandleResult{

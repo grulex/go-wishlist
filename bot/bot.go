@@ -104,7 +104,7 @@ func (s TelegramBot) Start() error {
 				go func() {
 					err := s.checkAvatar(update.MyChatMember.From.ID)
 					if err != nil {
-						log.Println(err)
+						s.sendErrorToChat(update.MyChatMember.Chat.ID)
 					}
 				}()
 

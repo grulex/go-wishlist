@@ -61,6 +61,7 @@ func getButton(text, link string) tgbotapi.InlineKeyboardMarkup {
 }
 
 func (s TelegramBot) Start() error {
+	ctx := context.Background()
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 30
 	updates := s.telegramBot.GetUpdatesChan(updateConfig)
@@ -71,7 +72,7 @@ func (s TelegramBot) Start() error {
 			if inlineMessage == "" {
 				continue
 			}
-			wishlist, err := s.container.Wishlist.Get(context.Background(), wishlistPkg.ID(inlineMessage))
+			wishlist, err := s.container.Wishlist.Get(ctx, wishlistPkg.ID(inlineMessage))
 			if err != nil {
 				continue
 			}
@@ -96,20 +97,20 @@ func (s TelegramBot) Start() error {
 
 		if update.MyChatMember != nil {
 			if update.MyChatMember.NewChatMember.Status == "member" {
-				err := s.checkAndRegisterUser(update.MyChatMember.From)
+				err := s.checkAndRegisterUser(ctx, update.MyChatMember.From)
 				if err != nil {
 					continue
 				}
 
 				go func() {
-					err := s.checkAvatar(update.MyChatMember.From.ID)
+					err := s.checkAvatar(ctx, update.MyChatMember.From.ID)
 					if err != nil {
 						s.sendErrorToChat(update.MyChatMember.Chat.ID)
 					}
 				}()
 
 				// waiting for render "/start" message
-				time.Sleep(time.Millisecond * 100)
+				time.Sleep(time.Millisecond * 200)
 
 				button := getButton(" 🎁Create Wishlist!", s.miniAppUrl)
 				msg := tgbotapi.NewMessage(update.MyChatMember.Chat.ID,
@@ -154,15 +155,14 @@ func (s TelegramBot) Start() error {
 				continue
 			}
 
-			go s.createWishItemsFromUrls(context.Background(), urls, update.Message.From.ID, update.Message.Chat.ID)
+			go s.createWishItemsFromUrls(ctx, urls, update.Message.From.ID, update.Message.Chat.ID)
 		}
 
 	}
 	return nil
 }
 
-func (s TelegramBot) checkAndRegisterUser(tgUser tgbotapi.User) error {
-	ctx := context.Background()
+func (s TelegramBot) checkAndRegisterUser(ctx context.Context, tgUser tgbotapi.User) error {
 	userSocialID := authPkg.SocialID(null.NewString(strconv.Itoa(int(tgUser.ID)), true))
 
 	auth, err := s.container.Auth.Get(ctx, authPkg.MethodTelegram, userSocialID)
@@ -181,15 +181,17 @@ func (s TelegramBot) checkAndRegisterUser(tgUser tgbotapi.User) error {
 	return nil
 }
 
-func (s TelegramBot) checkAvatar(tgUserID int64) error {
-	ctx := context.Background()
+func (s TelegramBot) checkAvatar(ctx context.Context, tgUserID int64) error {
 	userSocialID := authPkg.SocialID(null.NewString(strconv.Itoa(int(tgUserID)), true))
 	auth, err := s.container.Auth.Get(ctx, authPkg.MethodTelegram, userSocialID)
 	if err != nil {
 		return err
 	}
 
-	avatar, _ := s.createAvatarImage(ctx, tgUserID)
+	avatar, err := s.createAvatarImage(ctx, tgUserID)
+	if err != nil {
+		return err
+	}
 	if avatar == nil {
 		return nil
 	}

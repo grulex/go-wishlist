@@ -205,10 +205,12 @@ func (s TelegramBot) checkAvatar(ctx context.Context, tgUserID int64) error {
 		return err
 	}
 	wishlist := wishlists.GetDefault()
-	wishlist.Avatar = &avatar.ID
-	err = s.container.Wishlist.Update(ctx, wishlist)
-	if err != nil {
-		return err
+	if wishlist.Avatar == nil || (wishlist.Avatar != nil && *wishlist.Avatar != defaultAvatarImageID) {
+		wishlist.Avatar = &avatar.ID
+		err = s.container.Wishlist.Update(ctx, wishlist)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

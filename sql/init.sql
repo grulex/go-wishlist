@@ -30,6 +30,11 @@ alter table image
 create unique index image_id_uindex
     on image (id);
 
+CREATE TYPE price AS (
+    number NUMERIC,
+    currency_code TEXT
+);
+
 create table product
 (
     id          varchar(255) not null,

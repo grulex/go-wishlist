@@ -105,7 +105,7 @@ func (s TelegramBot) Start() error {
 				go func() {
 					err := s.checkAvatar(ctx, update.MyChatMember.From.ID)
 					if err != nil {
-						s.sendErrorToChat(update.MyChatMember.Chat.ID)
+						log.Println(err)
 					}
 				}()
 
@@ -205,12 +205,10 @@ func (s TelegramBot) checkAvatar(ctx context.Context, tgUserID int64) error {
 		return err
 	}
 	wishlist := wishlists.GetDefault()
-	if wishlist.Avatar == nil {
-		wishlist.Avatar = &avatar.ID
-		err = s.container.Wishlist.Update(ctx, wishlist)
-		if err != nil {
-			return err
-		}
+	wishlist.Avatar = &avatar.ID
+	err = s.container.Wishlist.Update(ctx, wishlist)
+	if err != nil {
+		return err
 	}
 
 	return nil

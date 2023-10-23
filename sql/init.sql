@@ -17,7 +17,7 @@ create table image
 (
     id           varchar(255) not null,
     storage_type varchar(255) not null,
-    file_id      varchar(255) not null,
+    file_id      text         not null,
     width        integer      not null,
     height       integer      not null,
     hash         varchar(255),

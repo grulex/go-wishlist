@@ -28,6 +28,8 @@ import (
 	"time"
 )
 
+const defaultAvatarImageID = imagePkg.ID("0fc13627-7e95-4bde-ac63-e962969b921a")
+
 type TelegramBot struct {
 	telegramBot *tgbotapi.BotAPI
 	miniAppUrl  string
@@ -99,6 +101,13 @@ func (s TelegramBot) Start() error {
 					continue
 				}
 
+				go func() {
+					err := s.checkAvatar(update.MyChatMember.From.ID)
+					if err != nil {
+						log.Println(err)
+					}
+				}()
+
 				// waiting for render "/start" message
 				time.Sleep(time.Millisecond * 100)
 
@@ -156,37 +165,56 @@ func (s TelegramBot) checkAndRegisterUser(tgUser tgbotapi.User) error {
 	ctx := context.Background()
 	userSocialID := authPkg.SocialID(null.NewString(strconv.Itoa(int(tgUser.ID)), true))
 
-	var avatarId *imagePkg.ID
-	avatar, _ := s.createAvatarImage(ctx, tgUser.ID)
-	if avatar != nil {
-		avatarId = &avatar.ID
-	}
-
 	auth, err := s.container.Auth.Get(ctx, authPkg.MethodTelegram, userSocialID)
 	if err != nil {
 		if !errors.Is(err, authPkg.ErrNotFound) {
 			return err
 		}
 	}
-	if auth != nil {
-		user, err := s.container.User.Get(ctx, auth.UserID)
+	if auth == nil {
+		err = s.register(ctx, tgUser)
 		if err != nil {
 			return err
 		}
-		wishlists, err := s.container.Wishlist.GetByUserID(ctx, user.ID)
-		if err != nil {
-			return err
-		}
-		wishlist := wishlists.GetDefault()
-		wishlist.Avatar = avatarId
+	}
+
+	return nil
+}
+
+func (s TelegramBot) checkAvatar(tgUserID int64) error {
+	ctx := context.Background()
+	userSocialID := authPkg.SocialID(null.NewString(strconv.Itoa(int(tgUserID)), true))
+	auth, err := s.container.Auth.Get(ctx, authPkg.MethodTelegram, userSocialID)
+	if err != nil {
+		return err
+	}
+
+	avatar, _ := s.createAvatarImage(ctx, tgUserID)
+	if avatar == nil {
+		return nil
+	}
+
+	user, err := s.container.User.Get(ctx, auth.UserID)
+	if err != nil {
+		return err
+	}
+	wishlists, err := s.container.Wishlist.GetByUserID(ctx, user.ID)
+	if err != nil {
+		return err
+	}
+	wishlist := wishlists.GetDefault()
+	if wishlist.Avatar == nil {
+		wishlist.Avatar = &avatar.ID
 		err = s.container.Wishlist.Update(ctx, wishlist)
 		if err != nil {
 			return err
 		}
-
-		return nil
 	}
 
+	return nil
+}
+
+func (s TelegramBot) register(ctx context.Context, tgUser tgbotapi.User) error {
 	createAuthTransaction, err := s.container.Auth.MakeCreateTransaction(ctx)
 	if err != nil {
 		return err
@@ -213,6 +241,7 @@ func (s TelegramBot) checkAndRegisterUser(tgUser tgbotapi.User) error {
 		wishlistId = tgUser.UserName
 	}
 
+	avatarID := defaultAvatarImageID
 	newWishlist := &wishlistPkg.Wishlist{
 		ID:          wishlistPkg.ID(wishlistId),
 		UserID:      user.ID,
@@ -220,7 +249,7 @@ func (s TelegramBot) checkAndRegisterUser(tgUser tgbotapi.User) error {
 		Title:       user.FullName + "'s Wishlist",
 		Description: "I will be happy to receive any of these gifts!",
 		IsArchived:  false,
-		Avatar:      avatarId,
+		Avatar:      &avatarID,
 	}
 
 	err = s.container.Wishlist.Create(ctx, newWishlist)
@@ -228,7 +257,8 @@ func (s TelegramBot) checkAndRegisterUser(tgUser tgbotapi.User) error {
 		return err
 	}
 
-	auth = &authPkg.Auth{
+	userSocialID := authPkg.SocialID(null.NewString(strconv.Itoa(int(tgUser.ID)), true))
+	auth := &authPkg.Auth{
 		Method:   authPkg.MethodTelegram,
 		SocialID: userSocialID,
 		UserID:   user.ID,

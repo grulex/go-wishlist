@@ -73,7 +73,19 @@ func MakeUnBookWishlistItemUsecase(wService wishlistService) httputil.HttpUseCas
 				},
 			}
 		}
-		if item.IsBookedBy != nil && *item.IsBookedBy != auth.UserID {
+
+		wishlist, err := wService.Get(r.Context(), wishlistPkg.ID(wishlistID))
+		if err != nil {
+			return httputil.HandleResult{
+				Error: &httputil.HandleError{
+					Type:    httputil.ErrorInternal,
+					Message: "Error getting wishlist",
+				},
+			}
+		}
+		isOwner := wishlist.UserID == auth.UserID
+
+		if item.IsBookedBy != nil && *item.IsBookedBy != auth.UserID && !isOwner {
 			return httputil.HandleResult{
 				Error: &httputil.HandleError{
 					Type:     httputil.ErrorForbidden,

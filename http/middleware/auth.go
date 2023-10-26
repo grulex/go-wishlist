@@ -10,8 +10,10 @@ import (
 	"errors"
 	"github.com/gorilla/mux"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
+	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
+	"github.com/grulex/go-wishlist/translate"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/guregu/null.v4"
 	httpPkg "net/http"
@@ -34,6 +36,8 @@ type userService interface {
 type wishlistService interface {
 	Create(ctx context.Context, wishlist *wishlistPkg.Wishlist) error
 }
+
+const defaultAvatarImageID = imagePkg.ID("0fc13627-7e95-4bde-ac63-e962969b921a")
 
 type telegramUser struct {
 	ID              int    `json:"id"`
@@ -159,6 +163,7 @@ func registerTelegramUser(
 	wService wishlistService,
 	tgUser telegramUser,
 ) (*authPkg.Auth, error) {
+	translator := translate.NewTranslator("en")
 	createAuthTransaction, err := authService.MakeCreateTransaction(ctx)
 	if err != nil {
 		return nil, err
@@ -184,13 +189,19 @@ func registerTelegramUser(
 		wishlistId = tgUser.Username
 	}
 
+	name := tgUser.Username
+	if name == "" {
+		name = tgUser.FirstName
+	}
+	avatar := defaultAvatarImageID
 	newWishlist := &wishlistPkg.Wishlist{
 		ID:          wishlistPkg.ID(wishlistId),
 		UserID:      user.ID,
 		IsDefault:   true,
-		Title:       user.FullName + "'s Wishlist",
-		Description: "I will be happy to receive any of these gifts!",
+		Title:       translator.Translate(string(user.Language), "wishlist_title") + " — " + name,
+		Description: translator.Translate(string(user.Language), "init_description"),
 		IsArchived:  false,
+		Avatar:      &avatar,
 	}
 
 	err = wService.Create(ctx, newWishlist)

@@ -15,6 +15,7 @@ import (
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
 	"github.com/grulex/go-wishlist/scrapper"
+	"github.com/grulex/go-wishlist/translate"
 	"github.com/jmoiron/sqlx"
 	"github.com/mvdan/xurls"
 	"gopkg.in/guregu/null.v4"
@@ -34,6 +35,7 @@ type TelegramBot struct {
 	telegramBot *tgbotapi.BotAPI
 	miniAppUrl  string
 	container   *container.ServiceContainer
+	translator  *translate.Translator
 }
 
 func NewTelegramBot(token, miniAppUrl string, container *container.ServiceContainer) *TelegramBot {
@@ -44,10 +46,13 @@ func NewTelegramBot(token, miniAppUrl string, container *container.ServiceContai
 		}
 		panic(err)
 	}
+	translator := translate.NewTranslator("en")
+
 	return &TelegramBot{
 		telegramBot: telegramBot,
 		miniAppUrl:  miniAppUrl,
 		container:   container,
+		translator:  translator,
 	}
 }
 
@@ -67,6 +72,8 @@ func (s TelegramBot) Start() error {
 	updates := s.telegramBot.GetUpdatesChan(updateConfig)
 	for update := range updates {
 		if update.InlineQuery != nil {
+			lang := update.InlineQuery.From.LanguageCode
+
 			inlineMessage := update.InlineQuery.Query
 			inlineMessage = strings.Trim(inlineMessage, " @")
 			if inlineMessage == "" {
@@ -79,7 +86,7 @@ func (s TelegramBot) Start() error {
 
 			postText := wishlist.Title + "\n\n" + wishlist.Description
 			article := tgbotapi.NewInlineQueryResultArticle(update.InlineQuery.ID, wishlist.Title, postText)
-			button := getButton("Open Wishlist", s.miniAppUrl+"?startapp="+string(wishlist.ID))
+			button := getButton(s.translator.Translate(lang, "open_wishlist")+"!", s.miniAppUrl+"?startapp="+string(wishlist.ID))
 			article.ReplyMarkup = &button
 			article.Description = wishlist.Description
 			article.ThumbURL = "https://png.pngtree.com/png-vector/20221121/ourmid/pngtree-comicstyle-wishlist-icon-with-splash-effect-health-sign-add-vector-png-image_41870708.jpg"
@@ -97,6 +104,7 @@ func (s TelegramBot) Start() error {
 
 		if update.MyChatMember != nil {
 			if update.MyChatMember.NewChatMember.Status == "member" {
+				lang := update.MyChatMember.From.LanguageCode
 				err := s.checkAndRegisterUser(ctx, update.MyChatMember.From)
 				if err != nil {
 					continue
@@ -112,12 +120,8 @@ func (s TelegramBot) Start() error {
 				// waiting for render "/start" message
 				time.Sleep(time.Millisecond * 200)
 
-				button := getButton(" 🎁Create Wishlist!", s.miniAppUrl)
-				msg := tgbotapi.NewMessage(update.MyChatMember.Chat.ID,
-					"Hello, I'm Wishlist Bot!\n\nI can help you to manage your wishlist.\n\n"+
-						"Press \"Create Wishlist!\" button or \"My Wishlist\" menu.\n\n"+
-						"Also, you can type @"+s.telegramBot.Self.UserName+" and your username in "+
-						"any chat and I'll share your wishlist.")
+				button := getButton(" 🎁"+s.translator.Translate(lang, "open_wishlist")+"!", s.miniAppUrl)
+				msg := tgbotapi.NewMessage(update.MyChatMember.Chat.ID, s.translator.Translate(lang, "welcome_message"))
 				msg.ReplyMarkup = &button
 				msg.DisableNotification = true
 				_, err = s.telegramBot.Send(msg)
@@ -128,10 +132,9 @@ func (s TelegramBot) Start() error {
 		}
 
 		if update.Message != nil {
+			lang := update.Message.From.LanguageCode
 			if update.Message.Text == "/start" {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID,
-					"☝️One more tip!\n I can add a Wish to your List by external link!\n"+
-						"Just *share* the link with me, and I'll try to create a wish from it.")
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, s.translator.Translate(lang, "tip_1"))
 				msg.ParseMode = tgbotapi.ModeMarkdown
 				msg.DisableNotification = true
 				_, err := s.telegramBot.Send(msg)
@@ -143,9 +146,7 @@ func (s TelegramBot) Start() error {
 			urlsParser := xurls.Relaxed
 			urls := urlsParser.FindAllString(update.Message.Text, -1)
 			if len(urls) == 0 {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID,
-					" I can add a Wish to your List by external link!\n"+
-						"Just *share* the link with me, and I'll try to create a wish from it.")
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, s.translator.Translate(lang, "tip_2"))
 				msg.ParseMode = tgbotapi.ModeMarkdown
 				msg.DisableNotification = true
 				_, err := s.telegramBot.Send(msg)
@@ -243,13 +244,17 @@ func (s TelegramBot) register(ctx context.Context, tgUser tgbotapi.User) error {
 		wishlistId = tgUser.UserName
 	}
 
+	name := tgUser.UserName
+	if name == "" {
+		name = tgUser.FirstName
+	}
 	avatarID := defaultAvatarImageID
 	newWishlist := &wishlistPkg.Wishlist{
 		ID:          wishlistPkg.ID(wishlistId),
 		UserID:      user.ID,
 		IsDefault:   true,
-		Title:       user.FullName + "'s Wishlist",
-		Description: "I will be happy to receive any of these gifts!",
+		Title:       s.translator.Translate(string(user.Language), "wishlist_title") + " — " + name,
+		Description: s.translator.Translate(string(user.Language), "init_description"),
 		IsArchived:  false,
 		Avatar:      &avatarID,
 	}
@@ -386,6 +391,13 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 		return
 	}
 
+	user, err := s.container.User.Get(ctx, auth.UserID)
+	if err != nil {
+		s.sendErrorToChat(chatID)
+		return
+	}
+	lang := string(user.Language)
+
 	resultProductByUrl := make(map[string]*productPkg.Product)
 	for _, url := range urls {
 		urlObj, err := urlPkg.Parse(url)
@@ -459,16 +471,13 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 
 	for _, prod := range resultProductByUrl {
 		if prod != nil {
-			description := "_ <empty> _"
+			description := "_ <" + s.translator.Translate(lang, "empty") + "> _"
 			if prod.Description.String != "" {
 				description = prod.Description.String
 			}
 			msg := tgbotapi.NewMessage(chatID,
-				"Wish added to your List!\n\n"+
-					"*Title:*\n"+prod.Title+"\n\n"+
-					"*Description:*\n"+description+"\n\n"+
-					"Open your new [Wish]("+s.makeLinkToItem(*wID, prod.ID)+") to see it.",
-			)
+				s.translator.Translate(lang, "wish_added_pattern", prod.Title, description, s.makeLinkToItem(*wID, prod.ID)))
+
 			msg.DisableNotification = true
 			msg.ParseMode = tgbotapi.ModeMarkdown
 			msg.DisableWebPagePreview = true

@@ -13,6 +13,7 @@ import (
 	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -87,6 +88,7 @@ func MakeUpdateWishlistUsecase(wService wishlistService, fService fileService, i
 		if request.Wishlist.Avatar != nil && request.Wishlist.Avatar.ID == "" {
 			newImage, result := wishlists.UploadBase64Image(r.Context(), fService, iService, request.Wishlist.Avatar.Src)
 			if result.Error != nil {
+				log.Printf("Error uploading image: %v, %+v\n", result.Error, request.Wishlist.Avatar)
 				return result
 			}
 			wishlist.Avatar = &newImage.ID

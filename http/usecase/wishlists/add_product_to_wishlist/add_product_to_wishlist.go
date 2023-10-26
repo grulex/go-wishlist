@@ -13,6 +13,7 @@ import (
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -96,6 +97,7 @@ func MakeAddProductToWishlistUsecase(
 		if request.Product.Image != nil && request.Product.Image.Src != "" {
 			image, result := wishlists.UploadBase64Image(r.Context(), fService, iService, request.Product.Image.Src)
 			if result.Error != nil {
+				log.Printf("Error uploading image: %v, %+v\n", result.Error, request.Product.Image)
 				return result
 			}
 			product.ImageID = &image.ID

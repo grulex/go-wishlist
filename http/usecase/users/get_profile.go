@@ -43,6 +43,7 @@ func MakeGetProfileUsecase(subscribesService subscribeService, wService wishlist
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error getting wishlists",
+					Err:     err,
 				},
 			}
 		}
@@ -60,6 +61,7 @@ func MakeGetProfileUsecase(subscribesService subscribeService, wService wishlist
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error getting subscribes",
+					Err:     err,
 				},
 			}
 		}
@@ -79,6 +81,7 @@ func MakeGetProfileUsecase(subscribesService subscribeService, wService wishlist
 					Error: &httputil.HandleError{
 						Type:    httputil.ErrorInternal,
 						Message: "Error getting avatar",
+						Err:     err,
 					},
 				}
 			}

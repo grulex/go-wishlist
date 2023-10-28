@@ -65,6 +65,7 @@ func MakeUpdateWishlistUsecase(wService wishlistService, fService fileService, i
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error getting wishlist",
+					Err:     err,
 				},
 			}
 		}

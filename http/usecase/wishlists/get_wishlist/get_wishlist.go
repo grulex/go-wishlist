@@ -55,6 +55,7 @@ func MakeGetWishlistUsecase(sService subscribeService, wService wishlistService,
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error getting wishlist",
+					Err:     err,
 				},
 			}
 		}
@@ -78,6 +79,7 @@ func MakeGetWishlistUsecase(sService subscribeService, wService wishlistService,
 					Error: &httputil.HandleError{
 						Type:    httputil.ErrorInternal,
 						Message: "Error getting subscribe",
+						Err:     err,
 					},
 				}
 			}
@@ -91,6 +93,7 @@ func MakeGetWishlistUsecase(sService subscribeService, wService wishlistService,
 					Error: &httputil.HandleError{
 						Type:    httputil.ErrorInternal,
 						Message: "Error getting avatar",
+						Err:     err,
 					},
 				}
 			}

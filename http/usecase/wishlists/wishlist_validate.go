@@ -19,6 +19,7 @@ func IsValidWishlistAccess(ctx context.Context, wService wishlistService, wishli
 			Error: &httputil.HandleError{
 				Type:    httputil.ErrorInternal,
 				Message: "Error getting wishlist",
+				Err:     err,
 			},
 		}, false
 	}

@@ -69,6 +69,7 @@ func MakeRemoveProductFromWishlistUsecase(wService wishlistService) httputil.Htt
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error removing item from wishlist",
+					Err:     err,
 				},
 			}
 		}

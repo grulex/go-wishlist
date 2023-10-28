@@ -112,6 +112,7 @@ func MakeAddProductToWishlistUsecase(
 					Error: &httputil.HandleError{
 						Type:    httputil.ErrorInternal,
 						Message: "Error getting product",
+						Err:     err,
 					},
 				}
 			}
@@ -128,6 +129,7 @@ func MakeAddProductToWishlistUsecase(
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error creating product",
+					Err:     err,
 				},
 			}
 		}

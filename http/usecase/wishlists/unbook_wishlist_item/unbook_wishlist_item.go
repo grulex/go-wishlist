@@ -70,6 +70,7 @@ func MakeUnBookWishlistItemUsecase(wService wishlistService) httputil.HttpUseCas
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error getting wishlist item",
+					Err:     err,
 				},
 			}
 		}
@@ -80,6 +81,7 @@ func MakeUnBookWishlistItemUsecase(wService wishlistService) httputil.HttpUseCas
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error getting wishlist",
+					Err:     err,
 				},
 			}
 		}
@@ -101,6 +103,7 @@ func MakeUnBookWishlistItemUsecase(wService wishlistService) httputil.HttpUseCas
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error unBooking wishlist item",
+					Err:     err,
 				},
 			}
 		}
@@ -116,6 +119,7 @@ func isValidWishlist(r *http.Request, wService wishlistService, wishlistID strin
 			Error: &httputil.HandleError{
 				Type:    httputil.ErrorInternal,
 				Message: "Error getting wishlist",
+				Err:     err,
 			},
 		}, false
 	}

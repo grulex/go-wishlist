@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"fmt"
 	"github.com/corona10/goimagehash"
 	"github.com/grulex/go-wishlist/http/httputil"
 	filePkg "github.com/grulex/go-wishlist/pkg/file"
@@ -33,29 +32,45 @@ func UploadBase64Image(ctx context.Context, fService fileService, iService image
 			},
 		}
 	}
-	invalidJpegResult := httputil.HandleResult{
-		Error: &httputil.HandleError{
-			Type:    httputil.ErrorBadData,
-			Message: "invalid jpeg image",
-			Err:     err,
-		},
-	}
-	imageObject, format, err := image.Decode(bytes.NewReader(decodedSrc))
+	imageObject, _, err := image.Decode(bytes.NewReader(decodedSrc))
 	if err != nil {
-		fmt.Println(format)
-		return nil, invalidJpegResult
+		return nil, httputil.HandleResult{
+			Error: &httputil.HandleError{
+				Type:    httputil.ErrorBadData,
+				Message: "invalid jpeg image",
+				Err:     err,
+			},
+		}
 	}
 	aHash, err := goimagehash.AverageHash(imageObject)
 	if err != nil {
-		return nil, invalidJpegResult
+		return nil, httputil.HandleResult{
+			Error: &httputil.HandleError{
+				Type:    httputil.ErrorBadData,
+				Message: "invalid jpeg image",
+				Err:     err,
+			},
+		}
 	}
 	pHash, err := goimagehash.PerceptionHash(imageObject)
 	if err != nil {
-		return nil, invalidJpegResult
+		return nil, httputil.HandleResult{
+			Error: &httputil.HandleError{
+				Type:    httputil.ErrorBadData,
+				Message: "invalid jpeg image",
+				Err:     err,
+			},
+		}
 	}
 	dHash, err := goimagehash.DifferenceHash(imageObject)
 	if err != nil {
-		return nil, invalidJpegResult
+		return nil, httputil.HandleResult{
+			Error: &httputil.HandleError{
+				Type:    httputil.ErrorBadData,
+				Message: "invalid jpeg image",
+				Err:     err,
+			},
+		}
 	}
 
 	avatarLink, err := fService.UploadPhoto(ctx, bytes.NewReader(decodedSrc))

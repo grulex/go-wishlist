@@ -55,6 +55,7 @@ func MakeSubscribeWishlistUsecase(wService wishlistService, sService subscribeSe
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error subscribing to wishlist",
+					Err:     err,
 				},
 			}
 		}
@@ -70,6 +71,7 @@ func isValidWishlist(r *http.Request, wService wishlistService, wishlistID strin
 			Error: &httputil.HandleError{
 				Type:    httputil.ErrorInternal,
 				Message: "Error getting wishlist",
+				Err:     err,
 			},
 		}, false
 	}

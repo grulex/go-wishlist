@@ -68,6 +68,7 @@ func MakeGetWishlistItemsUsecase(wService wishlistService, productService produc
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error getting wishlist items",
+					Err:     err,
 				},
 			}
 		}
@@ -83,6 +84,7 @@ func MakeGetWishlistItemsUsecase(wService wishlistService, productService produc
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error getting products",
+					Err:     err,
 				},
 			}
 		}
@@ -102,6 +104,7 @@ func MakeGetWishlistItemsUsecase(wService wishlistService, productService produc
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,
 					Message: "Error getting images",
+					Err:     err,
 				},
 			}
 		}

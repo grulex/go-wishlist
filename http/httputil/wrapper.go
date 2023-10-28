@@ -32,7 +32,7 @@ func ResponseWrapper(f HttpUseCase) http.HandlerFunc {
 
 func responseError(handleError *HandleError, w http.ResponseWriter) {
 	if handleError.Type == ErrorInternal {
-		log.Println("Handler Error: ", string(handleError.JsonEncode()), "err", handleError.Err)
+		log.Printf("Handler Error: %+v\n", handleError)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -42,7 +42,7 @@ func responseError(handleError *HandleError, w http.ResponseWriter) {
 	}{handleError}
 	responseJson, err := json.Marshal(errorResp)
 	if err != nil {
-		log.Println("can't encode json", err, "error", handleError.Err.Error())
+		log.Printf("Handler Error: %+v\n json: %+v\n", err, errorResp)
 		http.Error(w, "can't encode json response error", handleError.GetHttpStatus())
 		return
 	}

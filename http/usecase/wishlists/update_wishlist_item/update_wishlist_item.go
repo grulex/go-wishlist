@@ -34,7 +34,7 @@ type productService interface {
 }
 
 type fileService interface {
-	UploadPhoto(ctx context.Context, reader io.Reader) (filePkg.Link, error)
+	UploadPhoto(ctx context.Context, reader io.Reader) ([]filePkg.ImageSize, error)
 }
 
 type imageService interface {

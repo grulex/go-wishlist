@@ -124,9 +124,19 @@ func MakeGetWishlistItemsUsecase(wService wishlistService, productService produc
 			if productsMap[item.ID.ProductID].ImageID != nil {
 				image := imagesMap[*product.ImageID]
 
+				sizes := make([]types.ImageSize, len(image.Sizes))
+				for i, s := range image.Sizes {
+					sizes[i] = types.ImageSize{
+						Width:  s.Width,
+						Height: s.Height,
+						Link:   usecase.GetFileUrl(r, s.FileLink),
+					}
+				}
+
 				resImage = &types.Image{
-					ID:   *product.ImageID,
-					Link: usecase.GetFileUrl(r, image.FileLink),
+					ID:    *product.ImageID,
+					Link:  usecase.GetFileUrl(r, image.FileLink),
+					Sizes: sizes,
 				}
 			}
 			resultItems = append(resultItems, types.Item{

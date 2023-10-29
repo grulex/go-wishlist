@@ -53,3 +53,9 @@ func (l *Link) Base64() string {
 	str := fmt.Sprintf("%s"+linkBase64Delimiter+"%s", l.StorageType, l.ID)
 	return base64.StdEncoding.EncodeToString([]byte(str))
 }
+
+type ImageSize struct {
+	Width  uint
+	Height uint
+	Link   Link
+}

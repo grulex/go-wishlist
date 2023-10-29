@@ -14,7 +14,7 @@ import (
 )
 
 type fileService interface {
-	UploadPhoto(ctx context.Context, reader io.Reader) (filePkg.Link, error)
+	UploadPhoto(ctx context.Context, reader io.Reader) ([]filePkg.ImageSize, error)
 }
 
 type imageService interface {
@@ -73,7 +73,7 @@ func UploadBase64Image(ctx context.Context, fService fileService, iService image
 		}
 	}
 
-	avatarLink, err := fService.UploadPhoto(ctx, bytes.NewReader(decodedSrc))
+	imageSizes, err := fService.UploadPhoto(ctx, bytes.NewReader(decodedSrc))
 	if err != nil {
 		return nil, httputil.HandleResult{
 			Error: &httputil.HandleError{
@@ -83,8 +83,16 @@ func UploadBase64Image(ctx context.Context, fService fileService, iService image
 			},
 		}
 	}
+	sizes := make([]imagePkg.Size, len(imageSizes))
+	for i, size := range imageSizes {
+		sizes[i] = imagePkg.Size{
+			Width:    size.Width,
+			Height:   size.Height,
+			FileLink: size.Link,
+		}
+	}
 	newImage := &imagePkg.Image{
-		FileLink: avatarLink,
+		FileLink: imageSizes[len(imageSizes)-1].Link,
 		Width:    uint(imageObject.Bounds().Dx()),
 		Height:   uint(imageObject.Bounds().Dy()),
 		Hash: imagePkg.Hash{
@@ -92,6 +100,7 @@ func UploadBase64Image(ctx context.Context, fService fileService, iService image
 			DHash: dHash.ToString(),
 			PHash: pHash.ToString(),
 		},
+		Sizes: sizes,
 	}
 	err = iService.Create(ctx, newImage)
 	if err != nil {

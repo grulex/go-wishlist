@@ -9,7 +9,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/grulex/go-wishlist/container"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
-	"github.com/grulex/go-wishlist/pkg/file"
 	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
@@ -300,6 +299,10 @@ func (s TelegramBot) createAvatarImage(ctx context.Context, tgUserId int64) (*im
 		return nil, err
 	}
 
+	return s.createImageFromUrl(ctx, fileUrl)
+}
+
+func (s TelegramBot) createImageFromUrl(ctx context.Context, fileUrl string) (*imagePkg.Image, error) {
 	httpClient := http.Client{}
 	httpResp, err := httpClient.Get(fileUrl)
 	if err != nil {
@@ -312,10 +315,6 @@ func (s TelegramBot) createAvatarImage(ctx context.Context, tgUserId int64) (*im
 	var body bytes.Buffer
 	copyBody := io.TeeReader(httpResp.Body, &body)
 	httpImage, err := jpeg.Decode(copyBody)
-	if err != nil {
-		return nil, err
-	}
-	fileLink, err := s.container.File.UploadPhoto(ctx, &body)
 	if err != nil {
 		return nil, err
 	}
@@ -333,8 +332,21 @@ func (s TelegramBot) createAvatarImage(ctx context.Context, tgUserId int64) (*im
 		return nil, err
 	}
 
+	imgSizes, err := s.container.File.UploadPhoto(ctx, &body)
+	if err != nil {
+		return nil, err
+	}
+	sizes := make([]imagePkg.Size, len(imgSizes))
+	for i, imgSize := range imgSizes {
+		sizes[i] = imagePkg.Size{
+			Width:    imgSize.Width,
+			Height:   imgSize.Height,
+			FileLink: imgSize.Link,
+		}
+	}
+
 	image := &imagePkg.Image{
-		FileLink: fileLink,
+		FileLink: imgSizes[len(imgSizes)-1].Link,
 		Width:    uint(httpImage.Bounds().Dx()),
 		Height:   uint(httpImage.Bounds().Dy()),
 		Hash: imagePkg.Hash{
@@ -342,6 +354,7 @@ func (s TelegramBot) createAvatarImage(ctx context.Context, tgUserId int64) (*im
 			DHash: dHash.ToString(),
 			PHash: pHash.ToString(),
 		},
+		Sizes: sizes,
 	}
 	err = s.container.Image.Create(ctx, image)
 	if err != nil {
@@ -414,17 +427,7 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 			title = linkResult.Preview.Title
 			description = linkResult.Preview.Description
 			if len(linkResult.Preview.Images) != 0 {
-				link := file.Link{
-					StorageType: file.StorageTypeRemoteLink,
-					ID:          file.ID(linkResult.Preview.Images[0]),
-				}
-				image := &imagePkg.Image{
-					FileLink: link,
-					Width:    0,
-					Height:   0,
-					Hash:     imagePkg.Hash{},
-				}
-				err := s.container.Image.Create(ctx, image)
+				image, err := s.createImageFromUrl(ctx, linkResult.Preview.Images[0])
 				if err != nil {
 					resultProductByUrl[url] = nil
 					continue

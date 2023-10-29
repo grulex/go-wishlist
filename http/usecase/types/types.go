@@ -41,9 +41,16 @@ type Product struct {
 }
 
 type Image struct {
-	ID   image.ID `json:"id"`
-	Link string   `json:"link,omitempty"`
-	Src  string   `json:"src,omitempty"`
+	ID    image.ID    `json:"id"`
+	Link  string      `json:"link,omitempty"`
+	Src   string      `json:"src,omitempty"`
+	Sizes []ImageSize `json:"sizes,omitempty"`
+}
+
+type ImageSize struct {
+	Width  uint   `json:"width"`
+	Height uint   `json:"height"`
+	Link   string `json:"link"`
 }
 
 type Subscribe struct {

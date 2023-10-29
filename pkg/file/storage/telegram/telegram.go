@@ -43,7 +43,7 @@ func (s Storage) GetFileReader(ctx context.Context, fileID file.ID) (io.ReadClos
 	return resp.Body, nil
 }
 
-func (s Storage) UploadFile(_ context.Context, reader io.Reader) (file.ID, error) {
+func (s Storage) UploadImageFile(_ context.Context, reader io.Reader) ([]file.ImageSize, error) {
 	photo := tgbotapi.NewInputMediaPhoto(tgbotapi.FileReader{
 		Name:   "wishes.jpg",
 		Reader: reader,
@@ -53,16 +53,26 @@ func (s Storage) UploadFile(_ context.Context, reader io.Reader) (file.ID, error
 	media.DisableNotification = true
 	mediaMsg, err := s.tgBot.SendMediaGroup(media)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if len(mediaMsg) == 0 {
-		return "", errors.New("expected more than one result message, got 0")
+		return nil, errors.New("expected more than one result message, got 0")
 	}
 
-	sizes := mediaMsg[0].Photo
-	maxSize := sizes[len(sizes)-1]
+	tgSizes := mediaMsg[0].Photo
+	sizes := make([]file.ImageSize, len(tgSizes))
+	for i, tgSize := range tgSizes {
+		sizes[i] = file.ImageSize{
+			Width:  uint(tgSize.Width),
+			Height: uint(tgSize.Height),
+			Link: file.Link{
+				StorageType: s.GetStorageType(),
+				ID:          file.ID(tgSize.FileID),
+			},
+		}
+	}
 
-	return file.ID(maxSize.FileID), nil
+	return sizes, nil
 }
 
 func (s Storage) GetStorageType() file.StorageType {

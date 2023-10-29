@@ -97,9 +97,18 @@ func MakeGetWishlistUsecase(sService subscribeService, wService wishlistService,
 					},
 				}
 			}
+			sizes := make([]types.ImageSize, len(avatar.Sizes))
+			for i, s := range avatar.Sizes {
+				sizes[i] = types.ImageSize{
+					Width:  s.Width,
+					Height: s.Height,
+					Link:   usecase.GetFileUrl(r, s.FileLink),
+				}
+			}
 			avatarAnswer = &types.Image{
-				ID:   *wishlist.Avatar,
-				Link: usecase.GetFileUrl(r, avatar.FileLink),
+				ID:    *wishlist.Avatar,
+				Link:  usecase.GetFileUrl(r, avatar.FileLink),
+				Sizes: sizes,
 			}
 		}
 

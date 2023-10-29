@@ -15,13 +15,14 @@ create unique index auth_social_id_method_uindex
 
 create table image
 (
-    id           varchar(255) not null,
-    storage_type varchar(255) not null,
-    file_id      text         not null,
-    width        integer      not null,
-    height       integer      not null,
+    id           varchar(255)              not null,
+    storage_type varchar(255)              not null,
+    file_id      text                      not null,
+    width        integer                   not null,
+    height       integer                   not null,
     hash         varchar(255),
-    created_at   timestamp    not null
+    created_at   timestamp                 not null,
+    sizes        jsonb default '[]'::jsonb not null
 );
 
 alter table image

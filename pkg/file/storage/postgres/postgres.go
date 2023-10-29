@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/grulex/go-wishlist/pkg/file"
 	"github.com/jmoiron/sqlx"
+	"image"
 	"io"
 	"time"
 )
@@ -40,7 +41,7 @@ func (s *Storage) GetFileReader(ctx context.Context, fileID file.ID) (io.ReadClo
 	return readCloser, nil
 }
 
-func (s *Storage) UploadFile(ctx context.Context, reader io.Reader) (file.ID, error) {
+func (s *Storage) UploadImageFile(ctx context.Context, reader io.Reader) ([]file.ImageSize, error) {
 	query := `
 		INSERT INTO file (
 			id,
@@ -54,7 +55,7 @@ func (s *Storage) UploadFile(ctx context.Context, reader io.Reader) (file.ID, er
 	id := file.ID(uuid.NewString())
 	content, err := io.ReadAll(reader)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	filePersistent := filePersistent{
 		ID:        string(id),
@@ -63,9 +64,25 @@ func (s *Storage) UploadFile(ctx context.Context, reader io.Reader) (file.ID, er
 	}
 	_, err = s.db.NamedExecContext(ctx, query, filePersistent)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return id, nil
+
+	img, _, err := image.Decode(bytes.NewReader(content))
+	if err != nil {
+		return nil, err
+	}
+	sizes := []file.ImageSize{
+		{
+			Width:  uint(img.Bounds().Dx()),
+			Height: uint(img.Bounds().Dy()),
+			Link: file.Link{
+				StorageType: s.GetStorageType(),
+				ID:          id,
+			},
+		},
+	}
+
+	return sizes, nil
 }
 
 func (s *Storage) GetStorageType() file.StorageType {

@@ -16,6 +16,7 @@ type Image struct {
 	Width     uint
 	Height    uint
 	Hash      Hash
+	Sizes     []Size
 	CreatedAt time.Time
 }
 
@@ -23,4 +24,10 @@ type Hash struct {
 	AHash string
 	DHash string
 	PHash string
+}
+
+type Size struct {
+	Width    uint
+	Height   uint
+	FileLink file.Link
 }

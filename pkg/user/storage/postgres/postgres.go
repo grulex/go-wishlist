@@ -12,7 +12,7 @@ import (
 
 type userPersistent struct {
 	ID              string    `db:"id"`
-	FullName        string    `db:"full_name"`
+	FullName        string    `db:"fullname"`
 	Language        string    `db:"lang"`
 	NotifyType      *string   `db:"notify_type"`
 	NotifyChannelID *string   `db:"notify_channel_id"`

@@ -10,6 +10,7 @@ import (
 	"github.com/grulex/go-wishlist/container"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
 	imagePkg "github.com/grulex/go-wishlist/pkg/image"
+	"github.com/grulex/go-wishlist/pkg/notify"
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
 	userPkg "github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
@@ -104,13 +105,13 @@ func (s TelegramBot) Start() error {
 		if update.MyChatMember != nil {
 			if update.MyChatMember.NewChatMember.Status == "member" {
 				lang := update.MyChatMember.From.LanguageCode
-				err := s.checkAndRegisterUser(ctx, update.MyChatMember.From)
+				err := s.checkAndRegisterUser(ctx, update.MyChatMember.From, update.MyChatMember.Chat)
 				if err != nil {
 					continue
 				}
 
 				go func() {
-					err := s.checkAvatar(ctx, update.MyChatMember.From.ID)
+					err := s.checkUpdates(ctx, update.MyChatMember.From.ID, update.MyChatMember.Chat.ID)
 					if err != nil {
 						log.Println(err)
 					}
@@ -127,6 +128,8 @@ func (s TelegramBot) Start() error {
 				if err != nil {
 					log.Println(err)
 				}
+			} else if update.MyChatMember.NewChatMember.Status == "kicked" {
+				// TODO: remove notify channel
 			}
 		}
 
@@ -162,7 +165,7 @@ func (s TelegramBot) Start() error {
 	return nil
 }
 
-func (s TelegramBot) checkAndRegisterUser(ctx context.Context, tgUser tgbotapi.User) error {
+func (s TelegramBot) checkAndRegisterUser(ctx context.Context, tgUser tgbotapi.User, tgChat tgbotapi.Chat) error {
 	userSocialID := authPkg.SocialID(null.NewString(strconv.Itoa(int(tgUser.ID)), true))
 
 	auth, err := s.container.Auth.Get(ctx, authPkg.MethodTelegram, userSocialID)
@@ -172,7 +175,7 @@ func (s TelegramBot) checkAndRegisterUser(ctx context.Context, tgUser tgbotapi.U
 		}
 	}
 	if auth == nil {
-		err = s.register(ctx, tgUser)
+		err = s.register(ctx, tgUser, tgChat)
 		if err != nil {
 			return err
 		}
@@ -181,7 +184,7 @@ func (s TelegramBot) checkAndRegisterUser(ctx context.Context, tgUser tgbotapi.U
 	return nil
 }
 
-func (s TelegramBot) checkAvatar(ctx context.Context, tgUserID int64) error {
+func (s TelegramBot) checkUpdates(ctx context.Context, tgUserID, tgChatID int64) error {
 	userSocialID := authPkg.SocialID(null.NewString(strconv.Itoa(int(tgUserID)), true))
 	auth, err := s.container.Auth.Get(ctx, authPkg.MethodTelegram, userSocialID)
 	if err != nil {
@@ -200,6 +203,16 @@ func (s TelegramBot) checkAvatar(ctx context.Context, tgUserID int64) error {
 	if err != nil {
 		return err
 	}
+	if user.NotifyType == nil {
+		tgType := notify.TypeTelegram
+		channelID := strconv.Itoa(int(tgChatID))
+		user.NotifyType = &tgType
+		user.NotifyChannelID = &channelID
+		err = s.container.User.Update(ctx, user)
+		if err != nil {
+			return err
+		}
+	}
 	wishlists, err := s.container.Wishlist.GetByUserID(ctx, user.ID)
 	if err != nil {
 		return err
@@ -216,7 +229,7 @@ func (s TelegramBot) checkAvatar(ctx context.Context, tgUserID int64) error {
 	return nil
 }
 
-func (s TelegramBot) register(ctx context.Context, tgUser tgbotapi.User) error {
+func (s TelegramBot) register(ctx context.Context, tgUser tgbotapi.User, tgChat tgbotapi.Chat) error {
 	createAuthTransaction, err := s.container.Auth.MakeCreateTransaction(ctx)
 	if err != nil {
 		return err
@@ -228,9 +241,13 @@ func (s TelegramBot) register(ctx context.Context, tgUser tgbotapi.User) error {
 		}
 	}(createAuthTransaction)
 
+	notifyTg := notify.TypeTelegram
+	notifyChannel := strconv.Itoa(int(tgChat.ID))
 	user := &userPkg.User{
-		FullName: tgUser.FirstName + " " + tgUser.LastName,
-		Language: userPkg.Language(tgUser.LanguageCode),
+		FullName:        tgUser.FirstName + " " + tgUser.LastName,
+		Language:        userPkg.Language(tgUser.LanguageCode),
+		NotifyType:      &notifyTg,
+		NotifyChannelID: &notifyChannel,
 	}
 
 	err = s.container.User.Create(ctx, user)

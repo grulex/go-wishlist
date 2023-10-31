@@ -28,6 +28,11 @@ func (s *Service) Create(ctx context.Context, user *userPkg.User) error {
 	return s.storage.Upsert(ctx, user)
 }
 
+func (s *Service) Update(ctx context.Context, user *userPkg.User) error {
+	user.UpdatedAt = time.Now().UTC()
+	return s.storage.Upsert(ctx, user)
+}
+
 func (s *Service) Get(ctx context.Context, id userPkg.ID) (*userPkg.User, error) {
 	return s.storage.Get(ctx, id)
 }

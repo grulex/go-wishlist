@@ -47,6 +47,7 @@ type subscribeService interface {
 type userService interface {
 	Create(ctx context.Context, user *userPkg.User) error
 	Get(ctx context.Context, userID userPkg.ID) (*userPkg.User, error)
+	Update(ctx context.Context, user *userPkg.User) error
 }
 
 type wishlistService interface {

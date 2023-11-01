@@ -135,6 +135,11 @@ func (s TelegramBot) Start() error {
 
 		if update.Message != nil {
 			lang := update.Message.From.LanguageCode
+			err := s.checkAndRegisterUser(ctx, *update.Message.From, *update.Message.Chat)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
 			if update.Message.Text == "/start" {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, s.translator.Translate(lang, "tip_1"))
 				msg.ParseMode = tgbotapi.ModeMarkdown
@@ -380,10 +385,11 @@ func (s TelegramBot) createImageFromUrl(ctx context.Context, fileUrl string) (*i
 	return image, nil
 }
 
-func (s TelegramBot) sendErrorToChat(chatID int64) {
+func (s TelegramBot) sendErrorToChat(err error, chatID int64) {
+	log.Println(err)
 	msg := tgbotapi.NewMessage(chatID,
 		"Sorry, I can't do that now. Please, try again later")
-	_, err := s.telegramBot.Send(msg)
+	_, err = s.telegramBot.Send(msg)
 	if err != nil {
 		log.Println(err)
 	}
@@ -393,37 +399,37 @@ func (s TelegramBot) createWishItemsFromUrls(ctx context.Context, urls []string,
 	userSocialID := authPkg.SocialID(null.NewString(strconv.Itoa(int(tgUserID)), true))
 	auth, err := s.container.Auth.Get(ctx, authPkg.MethodTelegram, userSocialID)
 	if err != nil {
-		s.sendErrorToChat(chatID)
+		s.sendErrorToChat(err, chatID)
 		return
 	}
 	var wID *wishlistPkg.ID
 	if auth != nil {
 		user, err := s.container.User.Get(ctx, auth.UserID)
 		if err != nil {
-			s.sendErrorToChat(chatID)
+			s.sendErrorToChat(err, chatID)
 			return
 		}
 		wishlists, err := s.container.Wishlist.GetByUserID(ctx, user.ID)
 		if err != nil {
-			s.sendErrorToChat(chatID)
+			s.sendErrorToChat(err, chatID)
 			return
 		}
 		wishlist := wishlists.GetDefault()
 		if err != nil {
-			s.sendErrorToChat(chatID)
+			s.sendErrorToChat(err, chatID)
 			return
 		}
 		wID = &wishlist.ID
 	}
 
 	if wID == nil {
-		s.sendErrorToChat(chatID)
+		s.sendErrorToChat(errors.New("wishlist not found"), chatID)
 		return
 	}
 
 	user, err := s.container.User.Get(ctx, auth.UserID)
 	if err != nil {
-		s.sendErrorToChat(chatID)
+		s.sendErrorToChat(err, chatID)
 		return
 	}
 	lang := string(user.Language)

@@ -37,13 +37,13 @@ func (s *Storage) Upsert(ctx context.Context, u *userPkg.User) error {
 		notify_channel_id
 	) VALUES (
 		:id,
-		:full_name,
+		:fullname,
 		:created_at,
 		:lang,
 		:notify_type,
 		:notify_channel_id
 	) ON CONFLICT (id) DO UPDATE SET
-		fullname = :full_name,
+		fullname = :fullname,
 		lang = :lang,
 		notify_type = :notify_type,
 		notify_channel_id = :notify_channel_id`

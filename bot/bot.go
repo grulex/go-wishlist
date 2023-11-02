@@ -104,30 +104,22 @@ func (s TelegramBot) Start() error {
 
 		if update.MyChatMember != nil {
 			if update.MyChatMember.NewChatMember.Status == "member" {
-				lang := update.MyChatMember.From.LanguageCode
+				// waiting for render "/start" message
+				time.Sleep(time.Millisecond * 200)
+
 				err := s.checkAndRegisterUser(ctx, update.MyChatMember.From, update.MyChatMember.Chat)
 				if err != nil {
 					continue
 				}
 
+				tgUserID := update.MyChatMember.From.ID
+				tgChatID := update.MyChatMember.Chat.ID
 				go func() {
-					err := s.checkUpdates(ctx, update.MyChatMember.From.ID, update.MyChatMember.Chat.ID)
+					err := s.checkUpdates(ctx, tgUserID, tgChatID)
 					if err != nil {
 						log.Println(err)
 					}
 				}()
-
-				// waiting for render "/start" message
-				time.Sleep(time.Millisecond * 200)
-
-				button := getButton(" 🎁"+s.translator.Translate(lang, "open_wishlist")+"!", s.miniAppUrl)
-				msg := tgbotapi.NewMessage(update.MyChatMember.Chat.ID, s.translator.Translate(lang, "welcome_message"))
-				msg.ReplyMarkup = &button
-				msg.DisableNotification = true
-				_, err = s.telegramBot.Send(msg)
-				if err != nil {
-					log.Println(err)
-				}
 			} else if update.MyChatMember.NewChatMember.Status == "kicked" {
 				// TODO: remove notify channel
 			}
@@ -184,6 +176,16 @@ func (s TelegramBot) checkAndRegisterUser(ctx context.Context, tgUser tgbotapi.U
 		if err != nil {
 			return err
 		}
+
+		button := getButton(" 🎁"+s.translator.Translate(tgUser.LanguageCode, "open_wishlist")+"!", s.miniAppUrl)
+		msg := tgbotapi.NewMessage(tgChat.ID, s.translator.Translate(tgUser.LanguageCode, "welcome_message"))
+		msg.ReplyMarkup = &button
+		msg.DisableNotification = true
+		_, err = s.telegramBot.Send(msg)
+		if err != nil {
+			log.Println(err)
+		}
+
 	}
 
 	return nil

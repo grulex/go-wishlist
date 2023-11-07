@@ -4,6 +4,7 @@ import (
 	"github.com/grulex/go-wishlist/config"
 	authSrv "github.com/grulex/go-wishlist/pkg/auth/service"
 	authStore "github.com/grulex/go-wishlist/pkg/auth/storage/postgres"
+	"github.com/grulex/go-wishlist/pkg/eventmanager/inmemory"
 	fileSrv "github.com/grulex/go-wishlist/pkg/file/service"
 	fileStorePg "github.com/grulex/go-wishlist/pkg/file/storage/postgres"
 	fileStoreTg "github.com/grulex/go-wishlist/pkg/file/storage/telegram"
@@ -21,16 +22,19 @@ import (
 )
 
 type ServiceContainer struct {
-	Auth      authService
-	File      fileService
-	Image     imageService
-	Product   productService
-	Subscribe subscribeService
-	User      userService
-	Wishlist  wishlistService
+	Auth         authService
+	File         fileService
+	Image        imageService
+	Product      productService
+	Subscribe    subscribeService
+	User         userService
+	Wishlist     wishlistService
+	EventManager eventManager
 }
 
 func NewServiceContainer(db *sqlx.DB, config *config.Config) *ServiceContainer {
+	eventManager := inmemory.NewEventManager(1000)
+
 	authStorage := authStore.NewAuthStorage(db)
 	authService := authSrv.NewAuthService(authStorage)
 
@@ -54,15 +58,16 @@ func NewServiceContainer(db *sqlx.DB, config *config.Config) *ServiceContainer {
 	userService := userSrv.NewUserService(userStorage)
 
 	wishlistStorage := wishlistStore.NewImageStorage(db)
-	wishlistService := wishlistSrv.NewWishlistService(wishlistStorage)
+	wishlistService := wishlistSrv.NewWishlistService(wishlistStorage, eventManager)
 
 	return &ServiceContainer{
-		Auth:      authService,
-		File:      fileService,
-		Image:     imageService,
-		Product:   productService,
-		Subscribe: subscribeService,
-		User:      userService,
-		Wishlist:  wishlistService,
+		Auth:         authService,
+		File:         fileService,
+		Image:        imageService,
+		Product:      productService,
+		Subscribe:    subscribeService,
+		User:         userService,
+		Wishlist:     wishlistService,
+		EventManager: eventManager,
 	}
 }

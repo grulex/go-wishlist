@@ -18,8 +18,11 @@ import (
 	"github.com/grulex/go-wishlist/translate"
 	"github.com/jmoiron/sqlx"
 	"github.com/mvdan/xurls"
+	_ "golang.org/x/image/webp"
 	"gopkg.in/guregu/null.v4"
-	"image/jpeg"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"log"
 	"net/http"
@@ -338,7 +341,7 @@ func (s TelegramBot) createImageFromUrl(ctx context.Context, fileUrl string) (*i
 
 	var body bytes.Buffer
 	copyBody := io.TeeReader(httpResp.Body, &body)
-	httpImage, err := jpeg.Decode(copyBody)
+	httpImage, _, err := image.Decode(copyBody)
 	if err != nil {
 		return nil, err
 	}

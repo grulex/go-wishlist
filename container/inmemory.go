@@ -3,6 +3,7 @@ package container
 import (
 	authSrv "github.com/grulex/go-wishlist/pkg/auth/service"
 	authInmemory "github.com/grulex/go-wishlist/pkg/auth/storage/inmemory"
+	"github.com/grulex/go-wishlist/pkg/eventmanager/inmemory"
 	fileSrv "github.com/grulex/go-wishlist/pkg/file/service"
 	fileInmemory "github.com/grulex/go-wishlist/pkg/file/storage/inmemory"
 	imageSrv "github.com/grulex/go-wishlist/pkg/image/service"
@@ -18,6 +19,8 @@ import (
 )
 
 func NewInMemoryServiceContainer() *ServiceContainer {
+	eventManager := inmemory.NewEventManager(1000)
+
 	authStorage := authInmemory.NewAuthInMemory()
 	authService := authSrv.NewAuthService(authStorage)
 
@@ -38,15 +41,16 @@ func NewInMemoryServiceContainer() *ServiceContainer {
 	userService := userSrv.NewUserService(userStorage)
 
 	wishlistStorage := wishlistInmemory.NewWishlistInMemory()
-	wishlistService := wishlistSrv.NewWishlistService(wishlistStorage)
+	wishlistService := wishlistSrv.NewWishlistService(wishlistStorage, eventManager)
 
 	return &ServiceContainer{
-		Auth:      authService,
-		File:      fileService,
-		Image:     imageService,
-		Product:   productService,
-		Subscribe: subscribeService,
-		User:      userService,
-		Wishlist:  wishlistService,
+		Auth:         authService,
+		File:         fileService,
+		Image:        imageService,
+		Product:      productService,
+		Subscribe:    subscribeService,
+		User:         userService,
+		Wishlist:     wishlistService,
+		EventManager: eventManager,
 	}
 }

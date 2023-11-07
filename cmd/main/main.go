@@ -8,6 +8,7 @@ import (
 	"github.com/grulex/go-wishlist/container"
 	"github.com/grulex/go-wishlist/db"
 	"github.com/grulex/go-wishlist/http"
+	notifysubscriber "github.com/grulex/go-wishlist/pkg/notify/subscriber"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"os"
@@ -56,8 +57,27 @@ func main() {
 	}()
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Println("tg bot recovered. Panic:\n", r)
+			}
+		}()
 		b := bot.NewTelegramBot(config.TelegramBotToken, config.TelegramMiniAppUrl, serviceContainer)
 		_ = b.Start()
+	}()
+
+	if err := initEventSubscribers(serviceContainer); err != nil {
+		log.Fatal(err)
+	}
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Println("Event manager recovered. Panic:\n", r)
+			}
+		}()
+		if err := serviceContainer.EventManager.StartHandling(context.Background()); err != nil {
+			log.Println(err)
+		}
 	}()
 
 	c := make(chan os.Signal, 1)
@@ -71,6 +91,17 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = serviceContainer.EventManager.Stop(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Println("shutting down")
 	os.Exit(0)
+}
+
+func initEventSubscribers(container *container.ServiceContainer) error {
+	notifySubscriber := notifysubscriber.NewSubscriberForNotify()
+
+	notifySubscriber.Subscribe(container.EventManager)
+	return nil
 }

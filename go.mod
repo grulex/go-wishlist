@@ -21,5 +21,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/image v0.13.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )

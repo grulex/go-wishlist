@@ -3,6 +3,7 @@ package container
 import (
 	"context"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
+	"github.com/grulex/go-wishlist/pkg/eventmanager"
 	filePkg "github.com/grulex/go-wishlist/pkg/file"
 	imagePkg "github.com/grulex/go-wishlist/pkg/image"
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
@@ -63,5 +64,13 @@ type wishlistService interface {
 	SetBookingAvailabilityForItem(ctx context.Context, itemID wishlistPkg.ItemID, isAvailable bool) error
 	RemoveItem(ctx context.Context, item wishlistPkg.ItemID) error
 	BookItem(ctx context.Context, itemID wishlistPkg.ItemID, userID userPkg.ID) error
-	UnBookItem(ctx context.Context, itemID wishlistPkg.ItemID) error
+	UnBookItem(ctx context.Context, itemID wishlistPkg.ItemID, userID userPkg.ID) error
+}
+
+type eventManager interface {
+	Publish(ctx context.Context, event eventmanager.Event) error
+	PublishMany(ctx context.Context, events ...eventmanager.Event) error
+	Subscribe(eventName eventmanager.EventName, handler eventmanager.EventHandler)
+	StartHandling(ctx context.Context) error
+	Stop(ctx context.Context) error
 }

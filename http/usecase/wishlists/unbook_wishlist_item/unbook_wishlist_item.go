@@ -7,14 +7,14 @@ import (
 	"github.com/grulex/go-wishlist/http/httputil"
 	authPkg "github.com/grulex/go-wishlist/pkg/auth"
 	productPkg "github.com/grulex/go-wishlist/pkg/product"
+	"github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
 	"net/http"
 )
 
 type wishlistService interface {
 	Get(ctx context.Context, id wishlistPkg.ID) (*wishlistPkg.Wishlist, error)
-	GetWishlistItem(ctx context.Context, itemID wishlistPkg.ItemID) (*wishlistPkg.Item, error)
-	UnBookItem(ctx context.Context, itemID wishlistPkg.ItemID) error
+	UnBookItem(ctx context.Context, itemID wishlistPkg.ItemID, userID user.ID) error
 }
 
 func MakeUnBookWishlistItemUsecase(wService wishlistService) httputil.HttpUseCase {
@@ -64,41 +64,17 @@ func MakeUnBookWishlistItemUsecase(wService wishlistService) httputil.HttpUseCas
 			ProductID:  productPkg.ID(productId),
 		}
 
-		item, err := wService.GetWishlistItem(r.Context(), itemID)
-		if err != nil && !errors.Is(err, wishlistPkg.ErrItemNotFound) {
-			return httputil.HandleResult{
-				Error: &httputil.HandleError{
-					Type:    httputil.ErrorInternal,
-					Message: "Error getting wishlist item",
-					Err:     err,
-				},
+		if err := wService.UnBookItem(r.Context(), itemID, auth.UserID); err != nil {
+			if errors.Is(err, wishlistPkg.ErrItemBookedByAnotherUser) {
+				return httputil.HandleResult{
+					Error: &httputil.HandleError{
+						Type:     httputil.ErrorForbidden,
+						ErrorKey: "forbidden_booked_by_another_user",
+						Message:  "item booked by another user",
+						Err:      nil,
+					},
+				}
 			}
-		}
-
-		wishlist, err := wService.Get(r.Context(), wishlistPkg.ID(wishlistID))
-		if err != nil {
-			return httputil.HandleResult{
-				Error: &httputil.HandleError{
-					Type:    httputil.ErrorInternal,
-					Message: "Error getting wishlist",
-					Err:     err,
-				},
-			}
-		}
-		isOwner := wishlist.UserID == auth.UserID
-
-		if item.IsBookedBy != nil && *item.IsBookedBy != auth.UserID && !isOwner {
-			return httputil.HandleResult{
-				Error: &httputil.HandleError{
-					Type:     httputil.ErrorForbidden,
-					ErrorKey: "forbidden_booked_by_another_user",
-					Message:  "item booked by another user",
-					Err:      nil,
-				},
-			}
-		}
-
-		if err := wService.UnBookItem(r.Context(), itemID); err != nil {
 			return httputil.HandleResult{
 				Error: &httputil.HandleError{
 					Type:    httputil.ErrorInternal,

@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/grulex/go-wishlist/pkg/eventmanager"
+	"github.com/grulex/go-wishlist/pkg/events/wish"
 	"github.com/grulex/go-wishlist/pkg/user"
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
 	"time"
@@ -18,13 +20,19 @@ type storage interface {
 	DeleteWishlistItem(ctx context.Context, item wishlistPkg.ItemID) error
 }
 
-type Service struct {
-	storage storage
+type eventManager interface {
+	Publish(ctx context.Context, event eventmanager.Event) error
 }
 
-func NewWishlistService(storage storage) *Service {
+type Service struct {
+	storage      storage
+	eventManager eventManager
+}
+
+func NewWishlistService(storage storage, manager eventManager) *Service {
 	return &Service{
-		storage: storage,
+		storage:      storage,
+		eventManager: manager,
 	}
 }
 
@@ -122,10 +130,27 @@ func (s *Service) BookItem(ctx context.Context, itemID wishlistPkg.ItemID, userI
 	item.IsBookedBy = &userID
 	item.UpdatedAt = time.Now().UTC()
 
-	return s.storage.UpsertWishlistItem(ctx, item)
+	err = s.storage.UpsertWishlistItem(ctx, item)
+	if err != nil {
+		return err
+	}
+
+	wishlist, err := s.storage.Get(ctx, item.ID.WishlistID)
+	if err != nil {
+		return err
+	}
+
+	return s.eventManager.Publish(ctx, wish.NewBookingUpdateEvent(wish.BookingPayload{
+		ItemID:      itemID,
+		WishOwner:   wishlist.UserID,
+		OldBookedBy: nil,
+		NewBookedBy: &userID,
+		EventBy:     userID,
+		EventAt:     time.Now().UTC(),
+	}))
 }
 
-func (s *Service) UnBookItem(ctx context.Context, itemID wishlistPkg.ItemID) error {
+func (s *Service) UnBookItem(ctx context.Context, itemID wishlistPkg.ItemID, userID user.ID) error {
 	item, err := s.storage.GetWishlistItemByID(ctx, itemID)
 	if err != nil {
 		return err
@@ -133,8 +158,29 @@ func (s *Service) UnBookItem(ctx context.Context, itemID wishlistPkg.ItemID) err
 	if item.IsBookedBy == nil {
 		return nil
 	}
+	wishlist, err := s.storage.Get(ctx, item.ID.WishlistID)
+	if err != nil {
+		return err
+	}
+	isOwner := wishlist.UserID == userID
+	if !isOwner && *item.IsBookedBy != userID {
+		return wishlistPkg.ErrItemBookedByAnotherUser
+	}
+
+	oldBookedBy := *item.IsBookedBy
 	item.IsBookedBy = nil
 	item.UpdatedAt = time.Now().UTC()
+	err = s.storage.UpsertWishlistItem(ctx, item)
+	if err != nil {
+		return err
+	}
 
-	return s.storage.UpsertWishlistItem(ctx, item)
+	return s.eventManager.Publish(ctx, wish.NewBookingUpdateEvent(wish.BookingPayload{
+		ItemID:      itemID,
+		WishOwner:   wishlist.UserID,
+		OldBookedBy: &oldBookedBy,
+		NewBookedBy: nil,
+		EventBy:     userID,
+		EventAt:     time.Now().UTC(),
+	}))
 }

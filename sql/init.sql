@@ -69,10 +69,12 @@ create index subscribe_user_id_index
 
 create table users
 (
-    id         varchar(255)                                not null,
-    fullname   varchar(255)                                not null,
-    created_at timestamp                                   not null,
-    lang       varchar(10) default 'en'::character varying not null
+    id                varchar(255)                                not null,
+    fullname          varchar(255)                                not null,
+    created_at        timestamp                                   not null,
+    lang              varchar(10) default 'en'::character varying not null,
+    notify_type       varchar(255),
+    notify_channel_id varchar(255)
 );
 
 alter table users

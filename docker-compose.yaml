@@ -1,0 +1,47 @@
+version: '3.9'
+services:
+  postgresdb:
+    image: postgres:latest
+    container_name: postgres_container
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=${PG_DATABASE}
+      - DATABASE_HOST=${PG_HOST}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+      - ./sql/0_init.sql:/docker-entrypoint-initdb.d/0_init.sql
+    networks:
+      - learning
+  app:
+    container_name: golang_container
+    environment:
+      - PG_USER=${PG_USER}
+      - PG_PASSWORD=${PG_PASSWORD}
+      - PG_DATABASE=${PG_DATABASE}
+      - PG_HOST=${PG_HOST}
+      - PG_PORT=${PG_PORT}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_MINI_APP_URL=${TELEGRAM_MINI_APP_URL}
+    tty: true
+    build: .
+    ports:
+      - "8080:8080"
+    restart: on-failure
+    volumes:
+      - .:/app
+    depends_on:
+      - postgresdb
+    networks:
+      - learning
+
+volumes:
+  pg_data:
+  pg_data_test:
+
+# Networks to be created to facilitate communication between containers
+networks:
+  learning:
+    driver: bridge

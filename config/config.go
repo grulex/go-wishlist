@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/joho/godotenv"
 	"os"
 	"strconv"
 )
@@ -19,6 +20,8 @@ type Config struct {
 }
 
 func InitFromEnv() *Config {
+	_ = godotenv.Load(".env")
+
 	pgPort, _ := strconv.ParseUint(os.Getenv("PG_PORT"), 10, 16)
 	pgPortUint16 := uint16(pgPort)
 

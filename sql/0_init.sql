@@ -134,3 +134,8 @@ alter table file
 create unique index file_id_uindex
     on file (id);
 
+-- default image
+INSERT INTO image
+    (id, storage_type, file_id, width, height, hash, created_at, sizes)
+VALUES
+    ('0fc13627-7e95-4bde-ac63-e962969b921a','remote_link','https://wishlist.super-app.studio/api/images/dGVsZWdyYW1fYm90OkFnQUNBZ0lBQXhrREFBT1NaVVBMeU9wcnZ2U3VfMnFCU3A4SUl2Qzg2ZVVBQWpqVk1Sc1pPaUJLZEktZk9fWnBfS1FCQUFNQ0FBTnRBQU16QkE=',1000,1000,'a:f0f8fcfcfc7c0000;d:00207054504c4002;p:d6c929b6a49c9669',NOW(),'[]');

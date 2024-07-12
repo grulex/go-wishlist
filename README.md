@@ -4,7 +4,6 @@ Backend for Telegram Wishlist MiniApp
 
 See more: https://github.com/grulex/telegram-wishlist-miniapp
 
-
 ## Quick start locally
 Specify environment variables:
 ```bash

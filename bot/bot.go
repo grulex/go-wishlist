@@ -138,7 +138,7 @@ func (s TelegramBot) Start() error {
 				for _, stat := range stats {
 					msgStr += stat.String() + "\n"
 				}
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "``` "+msgStr+"```")
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "```\n"+msgStr+"\n```")
 				msg.ParseMode = tgbotapi.ModeMarkdown
 				_, err = s.telegramBot.Send(msg)
 				if err != nil {

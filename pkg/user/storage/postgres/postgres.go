@@ -93,6 +93,10 @@ func (s *Storage) Get(ctx context.Context, id userPkg.ID) (*userPkg.User, error)
 }
 
 func (s *Storage) GetDailyStats(ctx context.Context, duration time.Duration) ([]*userPkg.Stats, error) {
+	createdAt := time.Now().Add(-duration)
+	// start of the day
+	createdAt = time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), 0, 0, 0, 0, time.UTC)
+
 	query := `Select substr(date_trunc('day', created_at::date)::text, 0, 11) as period, COUNT(*)
 		FROM users
 		WHERE created_at > $1
@@ -103,7 +107,7 @@ func (s *Storage) GetDailyStats(ctx context.Context, duration time.Duration) ([]
 		Count  int    `db:"count"`
 	}
 
-	err := s.db.SelectContext(ctx, &statsPersistent, query, time.Now().Add(-duration))
+	err := s.db.SelectContext(ctx, &statsPersistent, query, createdAt)
 	if err != nil {
 		return nil, err
 	}

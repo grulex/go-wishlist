@@ -91,3 +91,29 @@ func (s *Storage) Get(ctx context.Context, id userPkg.ID) (*userPkg.User, error)
 		NotifyChannelID: userPersistent.NotifyChannelID,
 	}, nil
 }
+
+func (s *Storage) GetDailyStats(ctx context.Context, duration time.Duration) ([]*userPkg.Stats, error) {
+	query := `Select substr(date_trunc('day', created_at::date)::text, 0, 11) as period, COUNT(*)
+		FROM users
+		WHERE created_at > $1
+		GROUP BY period
+		ORDER BY period;`
+	var statsPersistent []*struct {
+		Period string `db:"period"`
+		Count  int    `db:"count"`
+	}
+
+	err := s.db.SelectContext(ctx, &statsPersistent, query, time.Now().Add(-duration))
+	if err != nil {
+		return nil, err
+	}
+
+	stats := make([]*userPkg.Stats, 0, len(statsPersistent))
+	for _, s := range statsPersistent {
+		stats = append(stats, &userPkg.Stats{
+			Day:   s.Period,
+			Count: s.Count,
+		})
+	}
+	return stats, nil
+}

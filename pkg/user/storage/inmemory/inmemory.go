@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/grulex/go-wishlist/pkg/user"
 	"sync"
+	"time"
 )
 
 type Storage struct {
@@ -33,4 +34,8 @@ func (s *Storage) Get(_ context.Context, id user.ID) (*user.User, error) {
 	}
 	s.Lock.RUnlock()
 	return u, nil
+}
+
+func (s *Storage) GetDailyStats(_ context.Context, _ time.Duration) ([]*user.Stats, error) {
+	return nil, nil
 }

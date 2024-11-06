@@ -10,6 +10,7 @@ import (
 type storage interface {
 	Upsert(ctx context.Context, user *userPkg.User) error
 	Get(ctx context.Context, id userPkg.ID) (*userPkg.User, error)
+	GetDailyStats(ctx context.Context, duration time.Duration) ([]*userPkg.Stats, error)
 }
 
 type Service struct {
@@ -35,4 +36,8 @@ func (s *Service) Update(ctx context.Context, user *userPkg.User) error {
 
 func (s *Service) Get(ctx context.Context, id userPkg.ID) (*userPkg.User, error) {
 	return s.storage.Get(ctx, id)
+}
+
+func (s *Service) GetDailyStats(ctx context.Context, duration time.Duration) ([]*userPkg.Stats, error) {
+	return s.storage.GetDailyStats(ctx, duration)
 }

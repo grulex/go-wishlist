@@ -129,6 +129,22 @@ func (s TelegramBot) Start() error {
 		}
 
 		if update.Message != nil {
+			if update.Message.Text == "/stats_week" && update.Message.Chat.ID == 39439763 {
+				stats, err := s.container.User.GetDailyStats(ctx, time.Hour*24*7)
+				if err != nil {
+					log.Println(err)
+				}
+				msgStr := ""
+				for _, stat := range stats {
+					msgStr += stat.String() + "\n"
+				}
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, msgStr)
+				_, err = s.telegramBot.Send(msg)
+				if err != nil {
+					log.Println(err)
+				}
+				continue
+			}
 			lang := update.Message.From.LanguageCode
 			err := s.checkAndRegisterUser(ctx, *update.Message.From, *update.Message.Chat)
 			if err != nil {

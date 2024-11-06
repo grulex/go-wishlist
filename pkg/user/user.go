@@ -3,6 +3,7 @@ package user
 import (
 	"errors"
 	"github.com/grulex/go-wishlist/pkg/notify"
+	"strconv"
 	"time"
 )
 
@@ -19,4 +20,13 @@ type User struct {
 	NotifyChannelID *string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+}
+
+type Stats struct {
+	Day   string
+	Count int
+}
+
+func (s *Stats) String() string {
+	return s.Day + ": " + strconv.Itoa(s.Count)
 }

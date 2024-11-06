@@ -12,6 +12,7 @@ import (
 	wishlistPkg "github.com/grulex/go-wishlist/pkg/wishlist"
 	"github.com/jmoiron/sqlx"
 	"io"
+	"time"
 )
 
 type authService interface {
@@ -48,6 +49,7 @@ type subscribeService interface {
 type userService interface {
 	Create(ctx context.Context, user *userPkg.User) error
 	Get(ctx context.Context, userID userPkg.ID) (*userPkg.User, error)
+	GetDailyStats(ctx context.Context, duration time.Duration) ([]*userPkg.Stats, error)
 	Update(ctx context.Context, user *userPkg.User) error
 }
 

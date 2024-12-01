@@ -74,7 +74,7 @@ var translates = map[string]map[string]string{
 		"en": " I can add a Wish to your List by external link!\n" +
 			"Just *share* the link with me, and I'll try to create a wish from it.",
 		"ru": "Я могу добавить желание в ваш список по внешней ссылке!\n" +
-			"Просто *поделитесь* со мной ссылкой, и я попробую создать из нее желание.",
+			"Просто *поделитесь* со мной ссылкой, и я попробую создать из нее желание!",
 	},
 	"error_text": {
 		"en": "Sorry, I can't do that now. Please, try again later",

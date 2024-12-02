@@ -103,6 +103,7 @@ func (s TelegramBot) Start() error {
 			if err != nil && err.Error() != "json: cannot unmarshal bool into Go value of type tgbotapi.Message" {
 				log.Println(err)
 			}
+			log.Println("Call InlineQuery")
 		}
 
 		if update.MyChatMember != nil {

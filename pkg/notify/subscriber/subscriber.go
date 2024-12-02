@@ -50,7 +50,7 @@ func (s *Subscriber) onWishBookingUpdate() eventmanager.EventHandler {
 
 		}
 
-		fmt.Printf("Call onWishBookingUpdate %+v", bookingPayload)
+		fmt.Printf("Call onWishBookingUpdate %+v \n", bookingPayload)
 
 		return nil
 	}

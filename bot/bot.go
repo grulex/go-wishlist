@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"github.com/corona10/goimagehash"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/grulex/go-wishlist/container"
@@ -103,7 +104,7 @@ func (s TelegramBot) Start() error {
 			if err != nil && err.Error() != "json: cannot unmarshal bool into Go value of type tgbotapi.Message" {
 				log.Println(err)
 			}
-			log.Println("Call InlineQuery")
+			fmt.Println("Call InlineQuery")
 		}
 
 		if update.MyChatMember != nil {
